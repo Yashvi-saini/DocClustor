@@ -9,7 +9,7 @@ export interface LoginRequest {
     emailOrPhoneOrUsername?: string;
     password?: string;
     otp?: string;
-    email?: string; // used when login with OTP
+    email?: string;
 }
 
 export interface VerifyOtpRequest {
@@ -32,14 +32,16 @@ export interface ResetPasswordRequest {
     password: string;
 }
 
-// Responses
+
+export interface AuthUser {
+    id: string;
+    email: string;
+    username: string;
+}
+
 export interface AuthUserResponse {
     statusCode?: number;
-    data?: {
-        id: string;
-        email: string;
-        username: string;
-    };
+    data?: AuthUser;
     message?: string;
 }
 

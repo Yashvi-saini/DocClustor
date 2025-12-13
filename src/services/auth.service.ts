@@ -1,65 +1,66 @@
+'use client';
 
 import {
     RegisterRequest,
-    AuthUserResponse,
     LoginRequest,
-    SuccessResponse,
     VerifyOtpRequest,
     VerifyEmailRequest,
-    OAuthTokenRequest,
+    ResetPasswordRequest,
     OAuthTokenResponse,
-    ResetPasswordRequest
+    AuthUserResponse,
+    SuccessResponse
 } from './auth.types';
 
-// Import the Server Actions
 import {
     registerAction,
     loginAction,
     sendOtpAction,
     verifyOtpAction,
     verifyEmailAction,
-    exchangeOAuthTokenAction,
-    resetPasswordAction
+    resetPasswordAction,
+    exchangeOAuthTokenAction
 } from './auth.actions';
 
-const API_BASE_URL = 'https://doc-cluster.me/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
 
 class AuthService {
-   
-    async register(data: RegisterRequest): Promise<AuthUserResponse> {
+    // Server Action Delegates
+    register(data: RegisterRequest): Promise<AuthUserResponse> {
         return registerAction(data);
     }
 
-    async login(data: LoginRequest): Promise<AuthUserResponse> {
+    login(data: LoginRequest): Promise<AuthUserResponse> {
         return loginAction(data);
     }
 
-    async sendOtp(purpose: 'register' | 'login', email: string): Promise<SuccessResponse> {
+    sendOtp(purpose: 'register' | 'login', email: string): Promise<SuccessResponse> {
         return sendOtpAction(purpose, email);
     }
 
-    async verifyOtp(data: VerifyOtpRequest): Promise<SuccessResponse> {
+    verifyOtp(data: VerifyOtpRequest): Promise<SuccessResponse> {
         return verifyOtpAction(data);
     }
 
-    async verifyEmail(data: VerifyEmailRequest): Promise<SuccessResponse> {
+    verifyEmail(data: VerifyEmailRequest): Promise<SuccessResponse> {
         return verifyEmailAction(data);
     }
 
-    async exchangeOAuthToken(tempOAuthToken: string): Promise<OAuthTokenResponse> {
-        return exchangeOAuthTokenAction(tempOAuthToken);
-    }
-
-    async resetPassword(data: ResetPasswordRequest): Promise<SuccessResponse> {
+    resetPassword(data: ResetPasswordRequest): Promise<SuccessResponse> {
         return resetPasswordAction(data);
     }
 
-    initiateGoogleOAuth(): void {
+    // OAuth 
+    initiateGoogleOAuth() {
         window.location.href = `${API_BASE_URL}/auth/google`;
     }
 
-    initiateGithubOAuth(): void {
+    initiateGithubOAuth() {
         window.location.href = `${API_BASE_URL}/auth/github`;
+    }
+
+    async exchangeOAuthToken(tempOAuthToken: string): Promise<OAuthTokenResponse> {
+        // Delegate to Server Action to avoid CORS issues
+        return exchangeOAuthTokenAction(tempOAuthToken);
     }
 }
 

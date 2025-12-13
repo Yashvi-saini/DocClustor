@@ -1,7 +1,20 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  async redirects() {
+    return [
+      {
+        source: '/google',
+        destination: '/oauth/callback',
+        permanent: true,
+      },
+      {
+        source: '/github',
+        destination: '/oauth/callback',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -1,72 +1,58 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { authService } from '@/services/auth.service';
+
+export default function OAuthCallbackPage() {
+    return (
+        <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><p className="text-lg">Loading authentication...</p></div>}>
+            <OAuthCallbackContent />
+        </Suspense>
+    );
+}
 
 function OAuthCallbackContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
-    const [status, setStatus] = useState<string>('Authenticating...');
+    const [status, setStatus] = useState('Authenticating...');
+    const hasRun = useRef(false);
 
     useEffect(() => {
-        const handleCallback = async () => {
-            //  find token in common query param names
-            const tempToken =
-                searchParams.get('tempToken') ||
-                searchParams.get('token') ||
-                searchParams.get('tempOAuthToken') ||
-                searchParams.get('code');
+        if (hasRun.current) return;
+        hasRun.current = true;
 
-            if (!tempToken) {
-                setStatus('Error: No token received from provider.');
-                return;
-            }
+        const tempOAuthToken = searchParams.get('tempOAuthToken') || searchParams.get('token');
 
+        if (!tempOAuthToken) {
+            console.error('OAuth callback params:', searchParams.toString());
+            setStatus('Invalid OAuth callback.');
+            return;
+        }
+
+        const exchange = async () => {
             try {
-                const response = await authService.exchangeOAuthToken(tempToken);
-                if (response.success && response.data) {
-                    // Storing tokens 
-                    if (response.data.tokens) {
-                        localStorage.setItem('accessToken', response.data.tokens.accessToken);
-                        localStorage.setItem('refreshToken', response.data.tokens.refreshToken);
-                    }
-                    if (response.data.user) {
-                        localStorage.setItem('user', JSON.stringify(response.data.user));
-                    }
+                const res = await authService.exchangeOAuthToken(tempOAuthToken);
 
-                    setStatus('Authentication successful! Redirecting...');
-                    // Redirect todashboard
-                    setTimeout(() => {
-                        router.push('/');
-                    }, 1000);
+                if (res.success) {
+                    setStatus('Login successful! Redirecting...');
+                    console.log('Redirecting to /dummydash');
+                    router.replace('/dummydash');
                 } else {
-                    console.error('OAuth Exchange Failed', response);
-                    setStatus('Authentication failed. Please try again.');
+                    setStatus((res as any).message || 'Authentication failed.');
                 }
-            } catch (error) {
-                console.error('OAuth Error:', error);
-                setStatus('An error occurred during authentication.');
+            } catch (err) {
+                console.error(err);
+                setStatus('OAuth error occurred.');
             }
         };
 
-        handleCallback();
+        exchange();
     }, [searchParams, router]);
 
     return (
         <div className="flex min-h-screen items-center justify-center">
-            <div className="text-center">
-                <h2 className="text-2xl font-bold mb-4">OAuth Callback</h2>
-                <p className="text-gray-600">{status}</p>
-            </div>
+            <p className="text-lg">{status}</p>
         </div>
-    );
-}
-
-export default function OAuthCallbackPage() {
-    return (
-        <Suspense fallback={<div>Loading authentication...</div>}>
-            <OAuthCallbackContent />
-        </Suspense>
     );
 }
