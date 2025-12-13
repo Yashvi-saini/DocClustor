@@ -1,14 +1,21 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import React from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { resetPasswordSchema, type ResetPasswordSchemaType } from "@/lib/authvalidations/resetPassword.schema";
 import PasswordInput from "@/components/inputfield_ui/PasswordInput";
+import { authService } from "@/services/auth.service";
 
 
 export default function ResetPasswordForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const emailParam = searchParams.get("email");
+  const email = emailParam ? decodeURIComponent(emailParam) : "";
+  const [apiError, setApiError] = React.useState<string | null>(null);
+  const [loading, setLoading] = React.useState(false);
   const { register, handleSubmit, formState: { errors }, watch } = useForm<ResetPasswordSchemaType>({
     resolver: zodResolver(resetPasswordSchema),
     mode: "onChange",
@@ -36,9 +43,25 @@ export default function ResetPasswordForm() {
         className="mt-[30px] flex flex-col gap-[30px] items-center w-full"
         noValidate
         autoComplete="off"
-        onSubmit={handleSubmit(() => {
-          // After reset, navigate to dashboard
-          router.push("/dummydash");
+        onSubmit={handleSubmit(async (data) => {
+          setApiError(null);
+          if (!email) {
+            setApiError("Missing email. Please restart the reset flow.");
+            return;
+          }
+          try {
+            setLoading(true);
+            const resp = await authService.resetPassword({ email, password: data.password });
+            if (resp && resp.success) {
+              router.push("/login");
+            } else {
+              setApiError(resp?.message || "Password reset failed.");
+            }
+          } catch (e: any) {
+            setApiError(e?.message || "An error occurred.");
+          } finally {
+            setLoading(false);
+          }
         })}
       >
         {/* New password */}
@@ -64,10 +87,17 @@ export default function ResetPasswordForm() {
         {/* Submit */}
         <button
           type="submit"
-          className={`h-[40px] md:h-[47px] w-full rounded-[6px] bg-[#0B76FF] text-white text-[18px] font-[700] hover:bg-[#0663d6] transition-colors`}
+          disabled={loading}
+          className={`h-[40px] md:h-[47px] w-full rounded-[6px] bg-[#0B76FF] text-white text-[18px] font-[700] hover:bg-[#0663d6] transition-colors disabled:opacity-70`}
         >
-          Reset Password
+          {loading ? "Resetting..." : "Reset Password"}
         </button>
+
+        {apiError && (
+          <div className="w-full p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
+            {apiError}
+          </div>
+        )}
       </form>
     </div>
   );

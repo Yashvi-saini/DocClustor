@@ -1,17 +1,20 @@
 "use client";
 
 import Image from "next/image";
-import React from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SignupSchema, type SignupSchemaType } from "@/lib/authvalidations/signup.schema";
 import IdentifierInput from "@/components/inputfield_ui/IdentifierInput";
 import PasswordInput from "@/components/inputfield_ui/PasswordInput";
-
+import { authService } from "@/services/auth.service";
 
 export default function RegisterForm() {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
+
   const {
     register,
     handleSubmit,
@@ -32,6 +35,43 @@ export default function RegisterForm() {
 
   const emailValue = watch("email");
   const usernameValue = watch("username");
+
+  const submitForm = async (data: SignupSchemaType) => {
+    setLoading(true);
+    setApiError(null);
+    try {
+      const response = await authService.register({
+        email: data.email,
+        username: data.username,
+        password: data.password,
+      });
+
+      // Check if registration was successful (status code 201 or data present)
+      if (response && (response.statusCode === 201 || response.data)) {
+        // Explicitly send OTP for verification
+        const email = encodeURIComponent(data.email);
+
+        // Call sendOtp with purpose 'register'
+        const otpResponse = await authService.sendOtp("register", data.email);
+
+        if (otpResponse.success) {
+          router.push(`/verify?mode=signup&email=${email}`);
+        } else {
+          // If OTP sending failed, warn the user but still maybe redirect or show error?
+          // Better to show error.
+          setApiError(otpResponse.message || "Registration successful but failed to send OTP. Please try login or resend OTP.");
+        }
+      } else {
+        setApiError(response.message || "Registration failed. Please try again.");
+      }
+    } catch (error: any) {
+      console.error("Registration Error", error);
+      setApiError(error.message || "Something went wrong during registration.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="w-full max-w-[610px] mx-auto">
       {/* Heading */}
@@ -56,11 +96,7 @@ export default function RegisterForm() {
         className="mt-[30px] flex flex-col gap-[30px] items-center w-full flex-1"
         noValidate
         autoComplete="off"
-        onSubmit={handleSubmit((data) => {
-          // Navigate to verify OTP for signup flow
-          const email = encodeURIComponent(data.email);
-          router.push(`/verify?mode=signup&email=${email}`);
-        })}
+        onSubmit={handleSubmit(submitForm)}
       >
         {/* Input Fields Container - Default Order 0 */}
         <div className="w-full flex flex-col gap-[30px]">
@@ -117,12 +153,20 @@ export default function RegisterForm() {
             ) : null}
           </div>
         </div>
+
+        {apiError && (
+          <div className="w-full p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
+            {apiError}
+          </div>
+        )}
+
         {/* Submit Button - Default Order 1 */}
         <button
           type="submit"
-          className={`order-last md:order-none mt-auto md:mt-[2px] h-[47px] w-full rounded-[6px] bg-[#0B76FF] text-white text-[18px] font-[700] hover:bg-[#0663d6] transition-colors`}
+          disabled={loading}
+          className={`order-last md:order-none mt-auto md:mt-[2px] h-[47px] w-full rounded-[6px] bg-[#0B76FF] text-white text-[18px] font-[700] hover:bg-[#0663d6] transition-colors disabled:opacity-70`}
         >
-          Sign Up
+          {loading ? "Signing Up..." : "Sign Up"}
         </button>
 
         {/* Divider */}
@@ -134,12 +178,20 @@ export default function RegisterForm() {
 
         {/* Social buttons */}
         <div className="w-full grid grid-cols-2 gap-2 md:flex md:justify-between md:gap-[14px]">
-          <button type="button" className={`h-[47px] w-full md:w-[296px] rounded-[8px] border border-[#999999] bg-white flex items-center justify-center gap-[6px] md:gap-2 px-1 md:px-0 text-[12px] sm:text-[14px] font-[500] text-[#737373]`}>
+          <button
+            type="button"
+            onClick={() => authService.initiateGoogleOAuth()}
+            className={`h-[47px] w-full md:w-[296px] rounded-[8px] border border-[#999999] bg-white flex items-center justify-center gap-[6px] md:gap-2 px-1 md:px-0 text-[12px] sm:text-[14px] font-[500] text-[#737373]`}
+          >
             <Image src="/google.svg" alt="Google" width={24} height={24} className="w-5 h-5 md:w-6 md:h-6 shrink-0" />
             <span className="truncate">Sign Up With Google</span>
           </button>
 
-          <button type="button" className={`h-[47px] w-full md:w-[296px] rounded-[8px] border border-[#999999] bg-white flex items-center justify-center gap-[6px] md:gap-2 px-1 md:px-0 text-[12px] sm:text-[14px] font-[500] text-[#737373]`}>
+          <button
+            type="button"
+            onClick={() => authService.initiateGithubOAuth()}
+            className={`h-[47px] w-full md:w-[296px] rounded-[8px] border border-[#999999] bg-white flex items-center justify-center gap-[6px] md:gap-2 px-1 md:px-0 text-[12px] sm:text-[14px] font-[500] text-[#737373]`}
+          >
             <Image src="/github.svg" alt="GitHub" width={24} height={24} className="w-5 h-5 md:w-6 md:h-6 shrink-0" />
             <span className="truncate">Sign Up With Github</span>
           </button>

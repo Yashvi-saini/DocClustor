@@ -1,13 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import React from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import IdentifierInput from "@/components/inputfield_ui/IdentifierInput";
 import PasswordInput from "@/components/inputfield_ui/PasswordInput";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema } from "@/lib/authvalidations/login.schema";
+import { authService } from "@/services/auth.service";
 
 
 type FormValues = {
@@ -17,7 +18,9 @@ type FormValues = {
 
 export default function LoginForm() {
   const router = useRouter();
-  const [showPassword, setShowPassword] = React.useState(false);
+  const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
+
   const {
     register,
     handleSubmit,
@@ -30,6 +33,29 @@ export default function LoginForm() {
     defaultValues: { email: "", password: "" },
   });
   const emailValue = watch("email");
+
+  const submitForm = async (data: FormValues) => {
+    setLoading(true);
+    setApiError(null);
+    try {
+      const response = await authService.login({
+        emailOrPhoneOrUsername: data.email,
+        password: data.password,
+      });
+
+      if (response && response.data) {
+        
+        router.push("/dummydash");
+      } else {
+        setApiError(response.message || "Login failed. Please check your credentials.");
+      }
+    } catch (error: any) {
+      console.error("Login Error", error);
+      setApiError(error.message || "An error occurred during login.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="w-full max-w-[610px] mx-auto">
@@ -55,10 +81,7 @@ export default function LoginForm() {
         className="mt-[30px] flex flex-col gap-[30px] items-center w-full flex-1"
         noValidate
         autoComplete="off"
-        onSubmit={handleSubmit(() => {
-          // On successful login, navigate to dashboard
-          router.push("/dummydash");
-        })}
+        onSubmit={handleSubmit(submitForm)}
       >
         <div className="w-full flex flex-col gap-[30px]">
           {/* Identifier (Email) with floating label */}
@@ -91,12 +114,19 @@ export default function LoginForm() {
           </div>
         </div>
 
+        {apiError && (
+          <div className="w-full p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
+            {apiError}
+          </div>
+        )}
+
         {/* Submit - Order last on mobile */}
         <button
           type="submit"
-          className={`order-last md:order-none mt-auto h-[47px] w-full rounded-[6px] bg-[#0B76FF] text-white text-[18px] font-[700] hover:bg-[#0663d6] transition-colors`}
+          disabled={loading}
+          className={`order-last md:order-none mt-auto h-[47px] w-full rounded-[6px] bg-[#0B76FF] text-white text-[18px] font-[700] hover:bg-[#0663d6] transition-colors disabled:opacity-70`}
         >
-          Log In
+          {loading ? "Logging In..." : "Log In"}
         </button>
 
         {/* Divider */}
@@ -108,12 +138,20 @@ export default function LoginForm() {
 
         {/* Social buttons */}
         <div className="w-full grid grid-cols-2 gap-2 md:flex md:justify-between md:gap-[14px]">
-          <button type="button" className={`h-[47px] w-full md:w-[296px] rounded-[12px] border border-[#999999] bg-white inline-flex items-center justify-center gap-[6px] md:gap-[10px] px-2 md:px-[16px] text-[12px] sm:text-[14px] font-[500] text-[#737373]`}>
+          <button
+            type="button"
+            onClick={() => authService.initiateGoogleOAuth()}
+            className={`h-[47px] w-full md:w-[296px] rounded-[12px] border border-[#999999] bg-white inline-flex items-center justify-center gap-[6px] md:gap-[10px] px-2 md:px-[16px] text-[12px] sm:text-[14px] font-[500] text-[#737373]`}
+          >
             <Image src="/google.svg" alt="Google" width={24} height={24} className="w-5 h-5 md:w-6 md:h-6 shrink-0" />
             <span className="truncate">Login with Google</span>
           </button>
 
-          <button type="button" className={`h-[47px] w-full md:w-[296px] rounded-[12px] border border-[#999999] bg-white inline-flex items-center justify-center gap-[6px] md:gap-[10px] px-2 md:px-[16px] text-[12px] sm:text-[14px] font-[500] text-[#737373]`}>
+          <button
+            type="button"
+            onClick={() => authService.initiateGithubOAuth()}
+            className={`h-[47px] w-full md:w-[296px] rounded-[12px] border border-[#999999] bg-white inline-flex items-center justify-center gap-[6px] md:gap-[10px] px-2 md:px-[16px] text-[12px] sm:text-[14px] font-[500] text-[#737373]`}
+          >
             <Image src="/github.svg" alt="GitHub" width={24} height={24} className="w-5 h-5 md:w-6 md:h-6 shrink-0" />
             <span className="truncate">Login with Github</span>
           </button>
