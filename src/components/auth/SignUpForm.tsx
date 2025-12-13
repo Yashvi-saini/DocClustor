@@ -9,6 +9,7 @@ import { SignupSchema, type SignupSchemaType } from "@/lib/authvalidations/signu
 import IdentifierInput from "@/components/inputfield_ui/IdentifierInput";
 import PasswordInput from "@/components/inputfield_ui/PasswordInput";
 import { authService } from "@/services/auth.service";
+import { toast } from "react-hot-toast";
 
 export default function RegisterForm() {
   const router = useRouter();
@@ -46,27 +47,32 @@ export default function RegisterForm() {
         password: data.password,
       });
 
-      // Check if registration was successful (status code 201 or data present)
+      
       if (response && (response.statusCode === 201 || response.data)) {
-        // Explicitly send OTP for verification
         const email = encodeURIComponent(data.email);
 
-        // Call sendOtp with purpose 'register'
+        // sendOtp 'register'
         const otpResponse = await authService.sendOtp("register", data.email);
 
         if (otpResponse.success) {
+          toast.success("Account created! Verify your email.");
           router.push(`/verify?mode=signup&email=${email}`);
         } else {
-          // If OTP sending failed, warn the user but still maybe redirect or show error?
-          // Better to show error.
-          setApiError(otpResponse.message || "Registration successful but failed to send OTP. Please try login or resend OTP.");
+          
+          const errorMsg = otpResponse.message || "Registration successful but failed to send OTP. Please try login or resend OTP.";
+          setApiError(errorMsg);
+          toast.error(errorMsg);
         }
       } else {
-        setApiError(response.message || "Registration failed. Please try again.");
+        const errorMsg = response.message || "Registration failed. Please try again.";
+        setApiError(errorMsg);
+        toast.error(errorMsg);
       }
     } catch (error: any) {
       console.error("Registration Error", error);
-      setApiError(error.message || "Something went wrong during registration.");
+      const errorMsg = error.message || "Something went wrong during registration.";
+      setApiError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -98,7 +104,7 @@ export default function RegisterForm() {
         autoComplete="off"
         onSubmit={handleSubmit(submitForm)}
       >
-        {/* Input Fields Container - Default Order 0 */}
+       
         <div className="w-full flex flex-col gap-[30px]">
           <IdentifierInput
             name="email"
@@ -160,7 +166,7 @@ export default function RegisterForm() {
           </div>
         )}
 
-        {/* Submit Button - Default Order 1 */}
+        {/* Submit Button  */}
         <button
           type="submit"
           disabled={loading}

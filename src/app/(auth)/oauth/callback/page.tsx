@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { authService } from '@/services/auth.service';
+import { toast } from "react-hot-toast";
 
 export default function OAuthCallbackPage() {
     return (
@@ -36,14 +37,18 @@ function OAuthCallbackContent() {
 
                 if (res.success) {
                     setStatus('Login successful! Redirecting...');
+                    toast.success("Login Successful!");
                     console.log('Redirecting to /dummydash');
                     router.replace('/dummydash');
                 } else {
-                    setStatus((res as any).message || 'Authentication failed.');
+                    const errorMsg = (res as any).message || 'Authentication failed.';
+                    setStatus(errorMsg);
+                    toast.error(errorMsg);
                 }
             } catch (err) {
                 console.error(err);
                 setStatus('OAuth error occurred.');
+                toast.error('OAuth error occurred.');
             }
         };
 

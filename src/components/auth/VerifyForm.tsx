@@ -4,14 +4,13 @@ import React, { useState } from "react";
 import OtpInput, { ResendOtpButton } from "@/components/inputfield_ui/OtpInput";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authService } from "@/services/auth.service";
+import { toast } from "react-hot-toast";
 
 export default function VerifyForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const mode = searchParams.get("mode") || "signup";
   const emailParam = searchParams.get("email");
-  // Decode the email if it's there, although searchParams.get usually handles basic decoding,
-  // explicit decoding might be safer if it was double encoded or similar, but typically get() is fine.
   const email = emailParam ? decodeURIComponent(emailParam) : "";
 
   const [otp, setOtp] = React.useState("");
@@ -28,9 +27,7 @@ export default function VerifyForm() {
   }, [otp]);
 
   const onComplete = (code: string) => {
-    setOtp(code);
-    // Optional: auto-submit on complete?
-    // verify(code); 
+    setOtp(code); 
   };
 
   const verify = async (codeOverride?: string) => {
@@ -51,41 +48,34 @@ export default function VerifyForm() {
           otp: codeToVerify
         });
       } else {
-        // Verify OTP for login or password reset
-        // purpose should be 'login' or maybe 'reset_password'?
-        // The Swagger purpose enum was ['register', 'login'].
-        // If mode is 'forgot', we might need to check if 'login' purpose works or if there is another flow.
-        // Assuming 'login' or generic verification for now.
-        // Wait, verifyOtp request requires 'purpose'.
-        // If mode is 'forgot', we probably used sendOtp('login') or something else?
-        // Let's assume 'login' for now if not signup, or based on what triggered it.
         const purpose = (mode === 'login' || mode === 'forgot') ? 'login' : 'register';
-        // Actually, if it's forgot password, usually we verify OTP then get a token to reset password.
-        // But the swagger definitions for 'verifyOtp' include 'purpose'.
 
         response = await authService.verifyOtp({
           email: email,
           otp: codeToVerify,
-          purpose: purpose as 'register' | 'login' // Force casting for now as per available types
+          purpose: purpose as 'register' | 'login' 
         });
       }
 
       if (response && response.success) {
-        // On success, navigate based on mode
+        toast.success("Verification successful!");
         if (mode === "forgot") {
-          // Assuming successful verification allows password reset
           router.push(`/reset-password?email=${encodeURIComponent(email)}&otp=${codeToVerify}`);
         } else {
-          // Login or Signup success
+          // on success
           router.push("/dummydash");
         }
       } else {
-        setError(response?.message || "Verification failed. Invalid OTP.");
+        const errorMsg = response?.message || "Verification failed. Invalid OTP.";
+        setError(errorMsg);
+        toast.error(errorMsg);
       }
 
     } catch (err: any) {
       console.error("Verification error", err);
-      setError(err.message || "An error occurred during verification.");
+      const errorMsg = err.message || "An error occurred during verification.";
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -97,15 +87,17 @@ export default function VerifyForm() {
       return;
     }
     try {
-      // Determine purpose
+
       const purpose = (mode === 'signup') ? 'register' : 'login';
       await authService.sendOtp(purpose, email);
+      toast.success("OTP Resent!");
       // Restart timer
       setResendKey(Date.now());
       setCooldownActive(true);
     } catch (err) {
       console.error("Resend OTP error", err);
       setError("Failed to resend OTP.");
+      toast.error("Failed to resend OTP.");
     }
   };
 

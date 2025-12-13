@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { resetPasswordSchema, type ResetPasswordSchemaType } from "@/lib/authvalidations/resetPassword.schema";
 import PasswordInput from "@/components/inputfield_ui/PasswordInput";
 import { authService } from "@/services/auth.service";
+import { toast } from "react-hot-toast";
 
 
 export default function ResetPasswordForm() {
@@ -46,19 +47,26 @@ export default function ResetPasswordForm() {
         onSubmit={handleSubmit(async (data) => {
           setApiError(null);
           if (!email) {
-            setApiError("Missing email. Please restart the reset flow.");
+            const errorMsg = "Missing email. Please restart the reset flow.";
+            setApiError(errorMsg);
+            toast.error(errorMsg);
             return;
           }
           try {
             setLoading(true);
             const resp = await authService.resetPassword({ email, password: data.password });
             if (resp && resp.success) {
+              toast.success("Password reset successful!");
               router.push("/login");
             } else {
-              setApiError(resp?.message || "Password reset failed.");
+              const errorMsg = resp?.message || "Password reset failed.";
+              setApiError(errorMsg);
+              toast.error(errorMsg);
             }
           } catch (e: any) {
-            setApiError(e?.message || "An error occurred.");
+            const errorMsg = e?.message || "An error occurred.";
+            setApiError(errorMsg);
+            toast.error(errorMsg);
           } finally {
             setLoading(false);
           }

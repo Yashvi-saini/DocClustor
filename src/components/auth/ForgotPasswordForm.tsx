@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { forgotPasswordSchema, type ForgotPasswordSchemaType } from "@/lib/authvalidations/forgotPassword.schema";
 import IdentifierInput from "@/components/inputfield_ui/IdentifierInput";
 import { authService } from "@/services/auth.service";
+import { toast } from "react-hot-toast";
 
 
 export default function ForgotPasswordForm() {
@@ -29,14 +30,19 @@ export default function ForgotPasswordForm() {
       const response = await authService.sendOtp('login', data.email);
 
       if (response && response.success) {
+        toast.success("OTP sent to your email.");
         const email = encodeURIComponent(data.email);
         router.push(`/verify?mode=forgot&email=${email}`);
       } else {
-        setApiError(response.message || "Failed to send OTP. Please check the email.");
+        const errorMsg = response.message || "Failed to send OTP. Please check the email.";
+        setApiError(errorMsg);
+        toast.error(errorMsg);
       }
     } catch (error: any) {
       console.error("Forgot Password Error", error);
-      setApiError(error.message || "An error occurred.");
+      const errorMsg = error.message || "An error occurred.";
+      setApiError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }

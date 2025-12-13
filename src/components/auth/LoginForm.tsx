@@ -9,6 +9,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema } from "@/lib/authvalidations/login.schema";
 import { authService } from "@/services/auth.service";
+import { toast } from "react-hot-toast";
 
 
 type FormValues = {
@@ -44,14 +45,18 @@ export default function LoginForm() {
       });
 
       if (response && response.data) {
-        
+        toast.success("Login Successful!");
         router.push("/dummydash");
       } else {
-        setApiError(response.message || "Login failed. Please check your credentials.");
+        const errorMsg = response.message || "Login failed. Please check your credentials.";
+        setApiError(errorMsg);
+        toast.error(errorMsg);
       }
     } catch (error: any) {
       console.error("Login Error", error);
-      setApiError(error.message || "An error occurred during login.");
+      const errorMsg = error.message || "An error occurred during login.";
+      setApiError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
