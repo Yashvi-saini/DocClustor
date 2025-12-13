@@ -1,5 +1,6 @@
 import AuthLayout from "@/components/auth/layout/AuthLayout";
 import ResetPasswordForm from "@/components/auth/ResetPasswordForm";
+import { Suspense } from "react";
 
 export default function ResetPasswordPage() {
   const images = [
@@ -9,7 +10,10 @@ export default function ResetPasswordPage() {
 
   return (
     <AuthLayout images={images} contentTop={124}>
-      <ResetPasswordForm />
+      <Suspense fallback={<div>Loading reset form...</div>}>
+        <ResetPasswordForm />
+        
+      </Suspense>
     </AuthLayout>
   );
 }
