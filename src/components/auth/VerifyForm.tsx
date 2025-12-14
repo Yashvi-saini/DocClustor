@@ -27,10 +27,18 @@ export default function VerifyForm() {
   }, [otp]);
 
   const onComplete = (code: string) => {
-    setOtp(code); 
+    setOtp(code);
   };
 
+  /* Throttle  */
+  const lastVerifyTime = React.useRef(0);
+  const lastResendBtnTime = React.useRef(0);
+
   const verify = async (codeOverride?: string) => {
+    const now = Date.now();
+    if (now - lastVerifyTime.current < 2000) return;
+    lastVerifyTime.current = now;
+
     const codeToVerify = codeOverride || otp;
     if (codeToVerify.length !== 6) {
       setError("Enter 6-digit OTP");
@@ -53,13 +61,14 @@ export default function VerifyForm() {
         response = await authService.verifyOtp({
           email: email,
           otp: codeToVerify,
-          purpose: purpose as 'register' | 'login' 
+          purpose: purpose as 'register' | 'login'
         });
       }
 
       if (response && response.success) {
         toast.success("Verification successful!");
         if (mode === "forgot") {
+          await authService.setResetAuthorizedCookie();
           router.push(`/reset-password?email=${encodeURIComponent(email)}&otp=${codeToVerify}`);
         } else {
           // on success
@@ -82,6 +91,10 @@ export default function VerifyForm() {
   };
 
   const handleResend = async () => {
+    const now = Date.now();
+    if (now - lastResendBtnTime.current < 2000) return;
+    lastResendBtnTime.current = now;
+
     if (!email) {
       setError("Email is missing. Cannot resend OTP.");
       return;

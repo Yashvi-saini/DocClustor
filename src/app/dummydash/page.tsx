@@ -12,9 +12,16 @@ export default function DashboardPage() {
           <Link href="/" className="px-4 py-2 rounded bg-[#0B76FF] text-white hover:bg-[#0663d6]">
             Go to Home
           </Link>
-          <Link href="/login" className="px-4 py-2 rounded border border-[#0B76FF] text-[#0B76FF] hover:bg-[#eaf3ff]">
+          <button
+            onClick={async () => {
+              const { authService } = await import("@/services/auth.service");
+              await authService.logout();
+              window.location.href = "/login";
+            }}
+            className="px-4 py-2 rounded border border-[#0B76FF] text-[#0B76FF] hover:bg-[#eaf3ff]"
+          >
             Log Out
-          </Link>
+          </button>
         </div>
       </div>
     </main>

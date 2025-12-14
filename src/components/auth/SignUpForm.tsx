@@ -37,7 +37,14 @@ export default function RegisterForm() {
   const emailValue = watch("email");
   const usernameValue = watch("username");
 
+  /* Throttle */
+  const lastSubmitTime = React.useRef(0);
+
   const submitForm = async (data: SignupSchemaType) => {
+    const now = Date.now();
+    if (now - lastSubmitTime.current < 2000) return;
+    lastSubmitTime.current = now;
+
     setLoading(true);
     setApiError(null);
     try {
@@ -47,7 +54,7 @@ export default function RegisterForm() {
         password: data.password,
       });
 
-      
+
       if (response && (response.statusCode === 201 || response.data)) {
         const email = encodeURIComponent(data.email);
 
@@ -58,7 +65,7 @@ export default function RegisterForm() {
           toast.success("Account created! Verify your email.");
           router.push(`/verify?mode=signup&email=${email}`);
         } else {
-          
+
           const errorMsg = otpResponse.message || "Registration successful but failed to send OTP. Please try login or resend OTP.";
           setApiError(errorMsg);
           toast.error(errorMsg);
@@ -104,7 +111,7 @@ export default function RegisterForm() {
         autoComplete="off"
         onSubmit={handleSubmit(submitForm)}
       >
-       
+
         <div className="w-full flex flex-col gap-[30px]">
           <IdentifierInput
             name="email"

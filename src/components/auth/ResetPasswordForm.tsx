@@ -45,6 +45,9 @@ export default function ResetPasswordForm() {
         noValidate
         autoComplete="off"
         onSubmit={handleSubmit(async (data) => {
+          if (loading) return;
+
+          setLoading(true);
           setApiError(null);
           if (!email) {
             const errorMsg = "Missing email. Please restart the reset flow.";
@@ -57,7 +60,26 @@ export default function ResetPasswordForm() {
             const resp = await authService.resetPassword({ email, password: data.password });
             if (resp && resp.success) {
               toast.success("Password reset successful!");
-              router.push("/login");
+              document.cookie = "reset_authorized=; path=/; max-age=0"; // Delete cookie
+
+              // Auto-Login
+              try {
+                const loginResp = await authService.login({
+                  emailOrPhoneOrUsername: email,
+                  password: data.password
+                });
+                if (loginResp && (loginResp.statusCode === 200 || loginResp.data)) {
+                  toast.success("Logging you in...");
+                  router.push("/dummydash");
+                } else {
+                 
+                  router.push("/login");
+                }
+              } catch (loginErr) {
+                console.error("Auto-login failed", loginErr);
+                router.push("/login");
+              }
+
             } else {
               const errorMsg = resp?.message || "Password reset failed.";
               setApiError(errorMsg);

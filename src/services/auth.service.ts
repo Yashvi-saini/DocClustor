@@ -24,7 +24,7 @@ import {
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
 
 class AuthService {
-    // Server Action Delegates
+  
     register(data: RegisterRequest): Promise<AuthUserResponse> {
         return registerAction(data);
     }
@@ -59,8 +59,18 @@ class AuthService {
     }
 
     async exchangeOAuthToken(tempOAuthToken: string): Promise<OAuthTokenResponse> {
-        // Delegate to Server Action to avoid CORS issues
+      
         return exchangeOAuthTokenAction(tempOAuthToken);
+    }
+
+    async logout() {
+        const { logoutAction } = await import('./auth.actions');
+        return logoutAction();
+    }
+
+    async setResetAuthorizedCookie() {
+        const { setResetAuthorizedCookieAction } = await import('./auth.actions');
+        return setResetAuthorizedCookieAction();
     }
 }
 

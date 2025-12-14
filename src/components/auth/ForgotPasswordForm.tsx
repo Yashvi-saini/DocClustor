@@ -22,11 +22,17 @@ export default function ForgotPasswordForm() {
   });
   const emailValue = watch("email");
 
+  /* Throttle  */
+  const lastSubmitTime = React.useRef(0);
+
   const submitForm = async (data: ForgotPasswordSchemaType) => {
+    const now = Date.now();
+    if (now - lastSubmitTime.current < 2000) return;
+    lastSubmitTime.current = now;
+
     setLoading(true);
     setApiError(null);
     try {
-      // Using 'login' purpose as we are verifying an existing user
       const response = await authService.sendOtp('login', data.email);
 
       if (response && response.success) {

@@ -35,7 +35,16 @@ export default function LoginForm() {
   });
   const emailValue = watch("email");
 
+  /* Throttle */
+  const lastSubmitTime = React.useRef(0);
+
   const submitForm = async (data: FormValues) => {
+    const now = Date.now();
+    if (now - lastSubmitTime.current < 2000) {
+      return;
+    }
+    lastSubmitTime.current = now;
+
     setLoading(true);
     setApiError(null);
     try {
