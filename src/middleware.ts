@@ -28,7 +28,10 @@ export function middleware(request: NextRequest) {
         return NextResponse.next();
     }
 
-    const hasAuthToken = request.cookies.has('token') || request.cookies.has('accessToken') || request.cookies.has('connect.sid');
+    const hasAuthToken = request.cookies.has('accessToken') ||
+        request.cookies.has('token') ||
+        request.cookies.has('refreshToken') ||
+        request.cookies.has('is_authenticated');
     console.log(`[Middleware] Has Auth Token: ${hasAuthToken}`);
 
     const isPublicRoute = publicRoutes.some(route => pathname === route || pathname.startsWith('/auth/'));
