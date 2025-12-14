@@ -8,6 +8,7 @@ const publicRoutes = [
     '/forgot-password',
     '/verify',
     '/reset-password',
+    '/oauth/callback',
     '/api/auth',
 ];
 
@@ -19,13 +20,22 @@ const flowProtectedRoutes = {
 
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
+    console.log(`[Middleware] Processing request for: ${pathname}`);
+
+
+    if (pathname.startsWith('/oauth/callback') || pathname.startsWith('/google') || pathname.startsWith('/github')) {
+        console.log(`[Middleware] Allowing public auth route: ${pathname}`);
+        return NextResponse.next();
+    }
+
     const hasAuthToken = request.cookies.has('token') || request.cookies.has('accessToken') || request.cookies.has('connect.sid');
+    console.log(`[Middleware] Has Auth Token: ${hasAuthToken}`);
 
     const isPublicRoute = publicRoutes.some(route => pathname === route || pathname.startsWith('/auth/'));
     const isAuthRoute = authRoutes.includes(pathname);
 
-
     if (!isPublicRoute && !hasAuthToken) {
+        // Skip next internal paths
         if (!pathname.startsWith('/_next') && !pathname.startsWith('/static') && !pathname.includes('.')) {
             const loginUrl = new URL('/login', request.url);
             loginUrl.searchParams.set('from', pathname);
@@ -33,7 +43,6 @@ export function middleware(request: NextRequest) {
         }
     }
 
-    
     if (isAuthRoute && hasAuthToken) {
         return NextResponse.redirect(new URL('/dummydash', request.url));
     }
