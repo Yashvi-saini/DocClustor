@@ -25,10 +25,10 @@ export default function ResetPasswordForm() {
   });
 
   return (
-    <div className="w-full max-w-[610px] mx-auto">
+    <div className="w-full max-w-[520px] mx-auto">
       {/* Heading */}
-      <div className="flex flex-col gap-[6px] text-center md:text-left">
-        <h1 className="text-[24px] leading-[32px] md:text-[44px] md:leading-[52px] font-[700] text-[#000]">
+      <div className="flex flex-col gap-[6px] text-center md:text-left mb-6 md:mb-12">
+        <h1 className="text-[24px] md:text-[40px] font-[700] text-[#000]">
           Reset Password
         </h1>
         <p className="hidden md:block text-[24px] leading-[36px] font-[500] text-[#6B6B6B]">
@@ -41,7 +41,7 @@ export default function ResetPasswordForm() {
 
       {/* Form */}
       <form
-        className="mt-[30px] flex flex-col gap-[30px] items-center w-full"
+        className="flex flex-col gap-6 items-center w-full"
         noValidate
         autoComplete="off"
         onSubmit={handleSubmit(async (data) => {
@@ -72,7 +72,7 @@ export default function ResetPasswordForm() {
                   toast.success("Logging you in...");
                   router.push("/dummydash");
                 } else {
-                 
+
                   router.push("/login");
                 }
               } catch (loginErr) {
@@ -118,7 +118,7 @@ export default function ResetPasswordForm() {
         <button
           type="submit"
           disabled={loading}
-          className={`h-[40px] md:h-[47px] w-full rounded-[6px] bg-[#0B76FF] text-white text-[18px] font-[700] hover:bg-[#0663d6] transition-colors disabled:opacity-70`}
+          className={`h-[44px] md:h-[50px] w-full rounded-[6px] bg-[#0B76FF] text-white text-[18px] font-[700] hover:bg-[#0663d6] transition-colors disabled:opacity-70`}
         >
           {loading ? "Resetting..." : "Reset Password"}
         </button>

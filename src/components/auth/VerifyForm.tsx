@@ -115,12 +115,12 @@ export default function VerifyForm() {
   };
 
   return (
-    <div className="w-full max-w-[610px] mx-auto">
-      <div className="flex flex-col gap-[6px] text-center md:text-left">
-        <h1 className="text-[24px] leading-[32px] md:text-[44px] md:leading-[52px] font-[700] text-[#000]">
+    <div className="w-full max-w-[520px] mx-auto">
+      <div className="flex flex-col gap-2 text-center md:text-left mb-8">
+        <h1 className="text-[24px] md:text-[40px] font-[700] text-[#000]">
           Verification
         </h1>
-        <p className="hidden md:block text-[24px] leading-[36px] font-[500] text-[#6B6B6B]">
+        <p className="hidden md:block text-[14px] md:text-[20px] font-[500] text-[#6B6B6B]">
           Enter the OTP sent to {email ? email : "your email"}
         </p>
         <p className="md:hidden text-[14px] leading-[20px] font-[500] text-[#6B6B6B]">
@@ -128,7 +128,7 @@ export default function VerifyForm() {
         </p>
       </div>
 
-      <div className="mt-[30px] flex flex-col gap-[22px] items-center w-full">
+      <div className="flex flex-col gap-6 items-center w-full">
         <OtpInput length={6} onChange={setOtp} onComplete={onComplete} error={error} />
         {/* space for display error*/}
         <div className="w-full h-[18px]">
@@ -137,12 +137,12 @@ export default function VerifyForm() {
           ) : null}
         </div>
 
-        <div className="w-full flex flex-col gap-[14px] mt-[22px]">
+        <div className="w-full flex flex-col gap-4">
           <button
             type="button"
             onClick={() => verify()}
             disabled={loading}
-            className={`h-[40px] md:h-[58px] w-full rounded-[10px] bg-[#0B76FF] text-white text-[18px] font-[700] hover:bg-[#0663d6] transition-colors disabled:opacity-70`}
+            className={`h-[44px] md:h-[50px] w-full rounded-[10px] bg-[#0B76FF] text-white text-[18px] font-[700] hover:bg-[#0663d6] transition-colors disabled:opacity-70`}
           >
             {loading ? "Verifying..." : "Verify OTP"}
           </button>

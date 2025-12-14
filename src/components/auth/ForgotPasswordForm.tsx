@@ -55,13 +55,13 @@ export default function ForgotPasswordForm() {
   };
 
   return (
-    <div className="w-full max-w-[610px] mx-auto">
+    <div className="w-full max-w-[520px] mx-auto">
       {/* Heading */}
-      <div className="flex flex-col gap-[6px] text-center md:text-left">
-        <h1 className="text-[24px] leading-[32px] md:text-[44px] md:leading-[52px] font-[700] text-[#000]">
+      <div className="flex flex-col gap-2 text-center md:text-left mb-6 md:mb-10">
+        <h1 className="text-[24px] md:text-[34px] font-[700] text-[#000] whitespace-nowrap">
           Forgot Your Password?
         </h1>
-        <p className="hidden md:block text-[24px] leading-[36px] font-[500] text-[#6B6B6B]">
+        <p className="hidden md:block text-[14px] md:text-[20px] font-[500] text-[#6B6B6B]">
           Enter your account’s email
         </p>
         <p className="md:hidden text-[14px] leading-[20px] font-[500] text-[#6B6B6B]">
@@ -71,19 +71,21 @@ export default function ForgotPasswordForm() {
 
       {/* Form */}
       <form
-        className="mt-[30px] flex flex-col gap-[30px] items-center w-full"
+        className="flex flex-col gap-6 items-center w-full"
         noValidate
         autoComplete="off"
         onSubmit={handleSubmit(submitForm)}
       >
-        <IdentifierInput
-          name="email"
-          label="Enter Email"
-          type="email"
-          register={register("email")}
-          error={errors.email?.message}
-          value={emailValue}
-        />
+        <div className="w-full">
+          <IdentifierInput
+            name="email"
+            label="Enter Email"
+            type="email"
+            register={register("email")}
+            error={errors.email?.message}
+            value={emailValue}
+          />
+        </div>
 
         {apiError && (
           <div className="w-full p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
@@ -94,7 +96,7 @@ export default function ForgotPasswordForm() {
         <button
           type="submit"
           disabled={loading}
-          className={`h-[47px] w-full rounded-[6px] bg-[#0B76FF] text-white text-[18px] font-[700] hover:bg-[#0663d6] transition-colors disabled:opacity-70`}
+          className={`h-[44px] md:h-[50px] w-full rounded-[6px] bg-[#0B76FF] text-white text-[18px] font-[700] hover:bg-[#0663d6] transition-colors disabled:opacity-70`}
         >
           {loading ? "Sending OTP..." : "Verify Email"}
         </button>

@@ -33,9 +33,8 @@ export default function Carousel({ images, showControls = false }: Props) {
       {images.map((src, i) => (
         <div
           key={src}
-          className={`absolute top-[88px] left-[82px] right-[82px] bottom-0 transition-opacity duration-700 ${
-            i === index ? "opacity-100" : "opacity-0"
-          }`}
+          className={`absolute top-[100px] left-[100px] right-[100px] bottom-[80px] transition-opacity duration-700 ${i === index ? "opacity-100" : "opacity-0"
+            }`}
         >
           <Image src={src} alt="carousel-image" fill className="object-contain" />
         </div>
