@@ -13,8 +13,19 @@ import { toast } from "react-hot-toast";
 export default function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const emailParam = searchParams.get("email");
-  const email = emailParam ? decodeURIComponent(emailParam) : "";
+  // Get email from sessionStorage
+  const [email, setEmail] = React.useState("");
+
+  React.useEffect(() => {
+    const emailFromStorage = sessionStorage.getItem("reset_email");
+
+    if (emailFromStorage) {
+      setEmail(emailFromStorage);
+    } else {
+      router.push("/login");
+    }
+  }, []);
+
   const [apiError, setApiError] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
   const { register, handleSubmit, formState: { errors }, watch } = useForm<ResetPasswordSchemaType>({
@@ -53,6 +64,7 @@ export default function ResetPasswordForm() {
             const errorMsg = "Missing email. Please restart the reset flow.";
             setApiError(errorMsg);
             toast.error(errorMsg);
+            setLoading(false);
             return;
           }
           try {

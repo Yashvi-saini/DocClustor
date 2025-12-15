@@ -94,7 +94,7 @@ export default function OtpInput({ length = 6, onChange, onComplete, error, isVe
 						className="w-[45px] h-[45px] sm:w-[50px] sm:h-[50px] md:w-[60px] md:h-[60px] rounded-[10px] md:rounded-[15px] text-center text-[18px] md:text-[24px] font-[700] text-[#000] outline-none bg-[#D9EEFF]"
 						style={{
 							border: "none",
-							boxShadow: isActive || hasVal || allFilled || showError ? `0 ${typeof window !== 'undefined' && window.innerWidth >= 768 ? '6px' : '4px'} 0 0 ${showError ? errorRed : allFilled ? successGreen : activeBlue}` : 'none',
+							boxShadow: isActive || hasVal || allFilled || showError ? `0 4px 0 0 ${showError ? errorRed : allFilled ? successGreen : activeBlue}` : 'none',
 						}}
 					/>
 				);

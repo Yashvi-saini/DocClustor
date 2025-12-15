@@ -63,7 +63,9 @@ export default function RegisterForm() {
 
         if (otpResponse.success) {
           toast.success("Account created! Verify your email.");
-          router.push(`/verify?mode=signup&email=${email}`);
+          sessionStorage.setItem("verify_email", data.email);
+          // Redirect to verify page
+          router.push(`/verify?mode=signup`);
         } else {
 
           const errorMsg = otpResponse.message || "Registration successful but failed to send OTP. Please try login or resend OTP.";

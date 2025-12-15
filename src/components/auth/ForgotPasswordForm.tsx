@@ -37,8 +37,8 @@ export default function ForgotPasswordForm() {
 
       if (response && response.success) {
         toast.success("OTP sent to your email.");
-        const email = encodeURIComponent(data.email);
-        router.push(`/verify?mode=forgot&email=${email}`);
+        sessionStorage.setItem("verify_email", data.email);
+        router.push(`/verify?mode=forgot`);
       } else {
         const errorMsg = response.message || "Failed to send OTP. Please check the email.";
         setApiError(errorMsg);

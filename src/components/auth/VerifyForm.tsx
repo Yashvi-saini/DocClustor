@@ -10,8 +10,19 @@ export default function VerifyForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const mode = searchParams.get("mode") || "signup";
-  const emailParam = searchParams.get("email");
-  const email = emailParam ? decodeURIComponent(emailParam) : "";
+
+  const [email, setEmail] = React.useState("");
+
+  React.useEffect(() => {
+    const emailFromStorage = sessionStorage.getItem("verify_email");
+
+    if (emailFromStorage) {
+      setEmail(emailFromStorage);
+    } else {
+      // If no email found in Storage, redirect away
+      router.push("/login");
+    }
+  }, []);
 
   const [otp, setOtp] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
@@ -69,7 +80,9 @@ export default function VerifyForm() {
         toast.success("Verification successful!");
         if (mode === "forgot") {
           await authService.setResetAuthorizedCookie();
-          router.push(`/reset-password?email=${encodeURIComponent(email)}&otp=${codeToVerify}`);
+
+          sessionStorage.setItem("reset_email", email);
+          router.push("/reset-password");
         } else {
           // on success
           router.push("/dummydash");

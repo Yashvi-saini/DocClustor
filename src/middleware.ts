@@ -55,10 +55,7 @@ export function middleware(request: NextRequest) {
     }
 
     if (pathname === '/verify') {
-        const emailParam = request.nextUrl.searchParams.get('email');
-        if (!emailParam) {
-            return NextResponse.redirect(new URL('/signup', request.url));
-        }
+        return NextResponse.next();
     }
 
     return NextResponse.next();
