@@ -6,12 +6,12 @@ const nextConfig: NextConfig = {
       {
         source: '/google',
         destination: '/oauth/callback',
-        permanent: true,
+        permanent: false,
       },
       {
         source: '/github',
         destination: '/oauth/callback',
-        permanent: true,
+        permanent: false,
       },
     ];
   },

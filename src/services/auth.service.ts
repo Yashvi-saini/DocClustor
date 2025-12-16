@@ -69,13 +69,6 @@ class AuthService {
             this.setCookie('is_authenticated', 'true');
         }
 
-        // token in cookie
-        if (response && (response as any).data?.tokens?.accessToken) {
-            const token = (response as any).data.tokens.accessToken;
-            this.setCookie('token', token);
-            this.setCookie('accessToken', token);
-        }
-
         return response;
     }
 
@@ -132,7 +125,7 @@ class AuthService {
         });
 
         if (response && response.success && response.data?.tokens?.accessToken) {
-            this.setCookie('token', response.data.tokens.accessToken);
+            this.setCookie('is_authenticated', 'true');
         }
         return response;
     }
