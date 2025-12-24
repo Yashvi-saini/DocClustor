@@ -14,7 +14,7 @@ export default function Carousel({ images, showControls = false }: Props) {
   useEffect(() => {
     const interval = setInterval(
       () => setIndex((i) => (i + 1) % images.length),
-      3000 // 3 seconds
+      3000 
     );
 
     return () => clearInterval(interval);

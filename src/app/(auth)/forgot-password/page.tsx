@@ -1,5 +1,5 @@
-import AuthLayout from "@/components/auth/layout/AuthLayout";
-import ForgotPasswordForm from "@/components/auth/ForgotPasswordForm";
+import AuthLayout from "@/features/auth/layout/AuthLayout";
+import ForgotPasswordForm from "@/features/auth/forms/ForgotPasswordForm";
 
 export default function ForgotPasswordPage() {
   const images = [

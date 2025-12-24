@@ -3,14 +3,14 @@
 import Image from "next/image";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import IdentifierInput from "@/components/inputfield_ui/IdentifierInput";
-import PasswordInput from "@/components/inputfield_ui/PasswordInput";
+import IdentifierInput from "@/features/auth/inputfield_ui/IdentifierInput";
+import PasswordInput from "@/features/auth/inputfield_ui/PasswordInput";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema, type LoginSchemaType } from "@/lib/authvalidations/authSchema";
+import { loginSchema, type LoginSchemaType } from "@/features/auth/schema/authSchema";
 import { authService } from "@/services/auth.service";
 import { toast } from "react-hot-toast";
-import FormSkeleton from "./FormSkeleton";
+import FormSkeleton from "@/features/auth/forms/FormSkeleton";
 
 type FormValues = LoginSchemaType;
 

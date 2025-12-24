@@ -4,11 +4,11 @@ import React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { resetPasswordSchema, type ResetPasswordSchemaType } from "@/lib/authvalidations/authSchema";
-import PasswordInput from "@/components/inputfield_ui/PasswordInput";
+import { resetPasswordSchema, type ResetPasswordSchemaType } from "@/features/auth/schema/authSchema";
+import PasswordInput from "@/features/auth/inputfield_ui/PasswordInput";
 import { authService } from "@/services/auth.service";
 import { toast } from "react-hot-toast";
-import FormSkeleton from "./FormSkeleton";
+import FormSkeleton from "@/features/auth/forms/FormSkeleton";
 
 
 export default function ResetPasswordForm() {

@@ -1,6 +1,6 @@
 import React, { Suspense } from "react";
-import AuthLayout from "@/components/auth/layout/AuthLayout";
-import VerifyForm from "@/components/auth/VerifyForm";
+import AuthLayout from "@/features/auth/layout/AuthLayout";
+import VerifyForm from "@/features/auth/forms/VerifyForm";
 
 export default function VerifyPage() {
   const images = [

@@ -4,11 +4,11 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { forgotPasswordSchema, type ForgotPasswordSchemaType } from "@/lib/authvalidations/authSchema";
-import IdentifierInput from "@/components/inputfield_ui/IdentifierInput";
+import { forgotPasswordSchema, type ForgotPasswordSchemaType } from "@/features/auth/schema/authSchema";
+import IdentifierInput from "@/features/auth/inputfield_ui/IdentifierInput";
 import { authService } from "@/services/auth.service";
 import { toast } from "react-hot-toast";
-import FormSkeleton from "./FormSkeleton";
+import FormSkeleton from "@/features/auth/forms/FormSkeleton";
 
 
 export default function ForgotPasswordForm() {

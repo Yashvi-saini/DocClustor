@@ -5,12 +5,12 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { signupSchema, type SignupSchemaType } from "@/lib/authvalidations/authSchema";
-import IdentifierInput from "@/components/inputfield_ui/IdentifierInput";
-import PasswordInput from "@/components/inputfield_ui/PasswordInput";
+import { signupSchema, type SignupSchemaType } from "@/features/auth/schema/authSchema";
+import IdentifierInput from "@/features/auth/inputfield_ui/IdentifierInput";
+import PasswordInput from "@/features/auth/inputfield_ui/PasswordInput";
 import { authService } from "@/services/auth.service";
 import { toast } from "react-hot-toast";
-import FormSkeleton from "./FormSkeleton";
+import FormSkeleton from "@/features/auth/forms/FormSkeleton";
 
 export default function RegisterForm() {
   const router = useRouter();

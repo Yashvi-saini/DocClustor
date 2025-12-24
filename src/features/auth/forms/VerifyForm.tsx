@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import OtpInput, { ResendOtpButton } from "@/components/inputfield_ui/OtpInput";
+import OtpInput, { ResendOtpButton } from "@/features/auth/inputfield_ui/OtpInput";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authService } from "@/services/auth.service";
 import { toast } from "react-hot-toast";
-import FormSkeleton from "./FormSkeleton";
+import FormSkeleton from "@/features/auth/forms/FormSkeleton";
 
 export default function VerifyForm() {
   const router = useRouter();

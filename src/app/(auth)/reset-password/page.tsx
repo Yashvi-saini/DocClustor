@@ -1,5 +1,5 @@
-import AuthLayout from "@/components/auth/layout/AuthLayout";
-import ResetPasswordForm from "@/components/auth/ResetPasswordForm";
+import AuthLayout from "@/features/auth/layout/AuthLayout";
+import ResetPasswordForm from "@/features/auth/forms/ResetPasswordForm";
 import { Suspense } from "react";
 
 export default function ResetPasswordPage() {
