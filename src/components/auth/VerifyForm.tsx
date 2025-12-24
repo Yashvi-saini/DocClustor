@@ -5,6 +5,7 @@ import OtpInput, { ResendOtpButton } from "@/components/inputfield_ui/OtpInput";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authService } from "@/services/auth.service";
 import { toast } from "react-hot-toast";
+import FormSkeleton from "./FormSkeleton";
 
 export default function VerifyForm() {
   const router = useRouter();
@@ -12,6 +13,7 @@ export default function VerifyForm() {
   const mode = searchParams.get("mode") || "signup";
 
   const [email, setEmail] = React.useState("");
+  const [isInitialLoading, setIsInitialLoading] = React.useState(true);
 
   React.useEffect(() => {
     const emailFromStorage = sessionStorage.getItem("verify_email");
@@ -22,6 +24,12 @@ export default function VerifyForm() {
       // If no email found in Storage, redirect away
       router.push("/login");
     }
+
+    //  skeleton loading
+    const timer = setTimeout(() => {
+      setIsInitialLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
   }, []);
 
   const [otp, setOtp] = React.useState("");
@@ -126,6 +134,11 @@ export default function VerifyForm() {
       toast.error("Failed to resend OTP.");
     }
   };
+
+  //skeleton during initial loading
+  if (isInitialLoading) {
+    return <FormSkeleton inputCount={0} />;
+  }
 
   return (
     <div className="w-full max-w-[520px] mx-auto">

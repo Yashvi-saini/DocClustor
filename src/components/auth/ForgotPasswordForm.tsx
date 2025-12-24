@@ -4,15 +4,17 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { forgotPasswordSchema, type ForgotPasswordSchemaType } from "@/lib/authvalidations/forgotPassword.schema";
+import { forgotPasswordSchema, type ForgotPasswordSchemaType } from "@/lib/authvalidations/authSchema";
 import IdentifierInput from "@/components/inputfield_ui/IdentifierInput";
 import { authService } from "@/services/auth.service";
 import { toast } from "react-hot-toast";
+import FormSkeleton from "./FormSkeleton";
 
 
 export default function ForgotPasswordForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [apiError, setApiError] = useState<string | null>(null);
 
   const { register, handleSubmit, formState: { errors }, watch } = useForm<ForgotPasswordSchemaType>({
@@ -21,6 +23,14 @@ export default function ForgotPasswordForm() {
     defaultValues: { email: "" },
   });
   const emailValue = watch("email");
+
+  // Simulate initial loading
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsInitialLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   /* Throttle  */
   const lastSubmitTime = React.useRef(0);
@@ -53,6 +63,11 @@ export default function ForgotPasswordForm() {
       setLoading(false);
     }
   };
+
+  // Show skeleton during initial loading
+  if (isInitialLoading) {
+    return <FormSkeleton inputCount={1} />;
+  }
 
   return (
     <div className="w-full max-w-[520px] mx-auto">

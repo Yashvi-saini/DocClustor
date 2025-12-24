@@ -4,10 +4,11 @@ import React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { resetPasswordSchema, type ResetPasswordSchemaType } from "@/lib/authvalidations/resetPassword.schema";
+import { resetPasswordSchema, type ResetPasswordSchemaType } from "@/lib/authvalidations/authSchema";
 import PasswordInput from "@/components/inputfield_ui/PasswordInput";
 import { authService } from "@/services/auth.service";
 import { toast } from "react-hot-toast";
+import FormSkeleton from "./FormSkeleton";
 
 
 export default function ResetPasswordForm() {
@@ -15,6 +16,7 @@ export default function ResetPasswordForm() {
   const searchParams = useSearchParams();
   // Get email from sessionStorage
   const [email, setEmail] = React.useState("");
+  const [isInitialLoading, setIsInitialLoading] = React.useState(true);
 
   React.useEffect(() => {
     const emailFromStorage = sessionStorage.getItem("reset_email");
@@ -24,6 +26,12 @@ export default function ResetPasswordForm() {
     } else {
       router.push("/login");
     }
+
+    // Show skeleton
+    const timer = setTimeout(() => {
+      setIsInitialLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
   }, []);
 
   const [apiError, setApiError] = React.useState<string | null>(null);
@@ -34,6 +42,11 @@ export default function ResetPasswordForm() {
     reValidateMode: "onChange",
     defaultValues: { password: "", confirmPassword: "" },
   });
+
+  // Show skeleton during initial loading
+  if (isInitialLoading) {
+    return <FormSkeleton inputCount={2} />;
+  }
 
   return (
     <div className="w-full max-w-[520px] mx-auto">

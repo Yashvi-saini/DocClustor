@@ -7,19 +7,17 @@ import IdentifierInput from "@/components/inputfield_ui/IdentifierInput";
 import PasswordInput from "@/components/inputfield_ui/PasswordInput";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema } from "@/lib/authvalidations/login.schema";
+import { loginSchema, type LoginSchemaType } from "@/lib/authvalidations/authSchema";
 import { authService } from "@/services/auth.service";
 import { toast } from "react-hot-toast";
+import FormSkeleton from "./FormSkeleton";
 
-
-type FormValues = {
-  email: string;
-  password: string;
-};
+type FormValues = LoginSchemaType;
 
 export default function LoginForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [apiError, setApiError] = useState<string | null>(null);
 
   const {
@@ -34,6 +32,14 @@ export default function LoginForm() {
     defaultValues: { email: "", password: "" },
   });
   const emailValue = watch("email");
+
+  // Simulate initial loading
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsInitialLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   /* Throttle */
   const lastSubmitTime = React.useRef(0);
@@ -70,6 +76,18 @@ export default function LoginForm() {
       setLoading(false);
     }
   };
+
+  // skeleton during initial loading
+  if (isInitialLoading) {
+    return (
+      <FormSkeleton
+        inputCount={2}
+        showRememberForgot={true}
+        showSocialButtons={true}
+        showFooter={true}
+      />
+    );
+  }
 
   return (
     <div className="w-full max-w-[520px] mx-auto">
