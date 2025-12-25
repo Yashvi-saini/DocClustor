@@ -1,28 +1,23 @@
-"use client";
-
-import Link from "next/link";
+import DashboardTypeCard from "@/features/dashtype/DashboardTypeCard";
 
 export default function DashboardPage() {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-[#f7f7f7]">
-      <div className="max-w-xl w-full bg-white rounded-xl shadow p-8 text-center">
-        <h1 className="text-3xl font-bold mb-2 text-[#000]">Dashboard</h1>
-        <p className="text-[#555] mb-6">You are logged in. This is a dummy dashboard.</p>
-        <div className="flex items-center justify-center gap-4">
-          <Link href="/" className="px-4 py-2 rounded bg-[#0B76FF] text-white hover:bg-[#0663d6]">
-            Go to Home
-          </Link>
-          <button
-            onClick={async () => {
-              const { authService } = await import("@/services/auth.service");
-              await authService.logout();
-              window.location.href = "/login";
-            }}
-            className="px-4 py-2 rounded border border-[#0B76FF] text-[#0B76FF] hover:bg-[#eaf3ff]"
-          >
-            Log Out
-          </button>
-        </div>
+    <main className="min-h-screen relative overflow-hidden bg-[#003259] flex items-center justify-center p-3 sm:p-4 md:p-6">
+      {/* Background gradients */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div
+          className="absolute -top-20 -right-20 sm:-top-32 sm:-right-32 w-[300px] h-[300px] sm:w-[450px] sm:h-[450px] md:w-[588px] md:h-[588px] rounded-full blur-[80px] sm:blur-[100px] md:blur-[120px] opacity-60"
+          style={{ background: '#018FFF' }}
+        />
+        <div
+          className="absolute -bottom-20 -left-20 sm:-bottom-32 sm:-left-32 w-[300px] h-[300px] sm:w-[450px] sm:h-[450px] md:w-[588px] md:h-[588px] rounded-full blur-[80px] sm:blur-[100px] md:blur-[120px] opacity-60"
+          style={{ background: '#4FF3D0' }}
+        />
+      </div>
+
+      {/* Main content */}
+      <div className="relative z-10 w-full max-w-3xl flex flex-col items-center gap-4 sm:gap-6">
+        <DashboardTypeCard />
       </div>
     </main>
   );
