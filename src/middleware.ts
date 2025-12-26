@@ -20,16 +20,16 @@ const flowProtectedRoutes = {
 
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
-    console.log(`[Middleware] Processing request for: ${pathname}`);
+   // console.log(`[Middleware] Processing request for: ${pathname}`);
 
 
     if (pathname.startsWith('/oauth/callback') || pathname.startsWith('/google') || pathname.startsWith('/github')) {
-        console.log(`[Middleware] Allowing public auth route: ${pathname}`);
+       // console.log(`[Middleware] Allowing public auth route: ${pathname}`);
         return NextResponse.next();
     }
 
     const hasAuthToken = request.cookies.has('token') || request.cookies.has('accessToken') || request.cookies.has('connect.sid') || request.cookies.has('is_authenticated');
-    console.log(`[Middleware] Has Auth Token: ${hasAuthToken}`);
+   // console.log(`[Middleware] Has Auth Token: ${hasAuthToken}`);
 
     const isPublicRoute = publicRoutes.some(route => pathname === route || pathname.startsWith('/auth/'));
     const isAuthRoute = authRoutes.includes(pathname);

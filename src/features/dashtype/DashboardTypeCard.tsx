@@ -42,7 +42,7 @@ export default function DashboardTypeCard() {
                <h1 className="text-[24px] font-semibold text-[#000000] mb-1 px-2 text-center" style={{ fontWeight: 600, lineHeight: 'normal' }}>
                     Choose Your Dashboard Type
                 </h1>
-                <p className="text-[15px] font-medium text-[#000000] px-2 sm:px-4 text-center whitespace-nowrap" style={{ fontWeight: 500, lineHeight: 'normal' }}>
+                <p className="text-[15px] font-medium text-[#000000] px-2 sm:px-4 text-center" style={{ fontWeight: 500, lineHeight: 'normal' }}>
                     Select the option that best fits your needs to access all platform features
                 </p>
           </div>

@@ -55,17 +55,17 @@ class AuthService {
     }
 
     async login(data: LoginRequest): Promise<AuthUserResponse> {
-        console.log("[AuthService] Login called with:", data.emailOrPhoneOrUsername);
+       // console.log("[AuthService] Login called with:", data.emailOrPhoneOrUsername);
         const response = await this.request<AuthUserResponse>('/auth/login', {
             method: 'POST',
             body: JSON.stringify(data),
             credentials: 'include'
         });
-        console.log("[AuthService] Login response:", response);
+        //console.log("[AuthService] Login response:", response);
 
 
         if (response && (response as any).success) {
-            console.log("[AuthService] Login success, setting local session flag.");
+          //  console.log("[AuthService] Login success, setting local session flag.");
             this.setCookie('is_authenticated', 'true');
         }
 
