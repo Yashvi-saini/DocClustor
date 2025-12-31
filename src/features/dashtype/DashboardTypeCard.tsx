@@ -49,11 +49,11 @@ export default function DashboardTypeCard() {
             {/* cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
                 {dashboardTypes.map((dashboard, index) => (
-                    <div key={index} className="group relative bg-[#E6E6E6] rounded-xl p-6 sm:p-8 md:p-10 lg:p-12 hover:bg-[#018FFF] hover:shadow-lg transition-all duration-300 cursor-pointer">
+                    <div key={index} className="group relative bg-[#E6E6E6] rounded-xl p-6 sm:p-8 md:p-10 lg:p-12 hover:bg-[#018FFF] hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 cursor-pointer">
                         <div className="flex flex-col items-center text-center">
                             <div className="mb-4 sm:mb-5">
                                 <Image src={dashboard.icon} alt={dashboard.title} width={60} height={60}
-                                    className="w-[50px] h-[50px] sm:w-[55px] sm:h-[55px] md:w-[60px] md:h-[60px]"
+                                    className="w-[50px] h-[50px] sm:w-[55px] sm:h-[55px] md:w-[60px] md:h-[60px] transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110"
                                 />
                             </div>
                             <h2 className="text-lg sm:text-xl font-bold text-[#003259] group-hover:text-white mb-1.5 sm:mb-2">
