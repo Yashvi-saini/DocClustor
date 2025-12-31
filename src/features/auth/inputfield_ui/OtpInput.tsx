@@ -58,6 +58,32 @@ export default function OtpInput({ length = 6, onChange, onComplete, error, isVe
 		}
 	};
 
+	const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>, idx: number) => {
+		e.preventDefault();
+		const pastedStr = e.clipboardData.getData("text").replace(/\D/g, "");
+		if (!pastedStr) return;
+
+		const nextValues = [...values];
+
+		let start = idx;
+		if (pastedStr.length === length) start = 0;
+		const chars = pastedStr.split("");
+		let lastChangedIndex = start;
+
+		chars.forEach((char, i) => {
+			const pos = start + i;
+			if (pos < length) {
+				nextValues[pos] = char;
+				lastChangedIndex = pos;
+			}
+		});
+
+		setValues(nextValues);
+		const nextFocus = Math.min(lastChangedIndex + 1, length - 1);
+		setActive(nextFocus);
+		inputsRef.current[nextFocus]?.focus();
+	};
+
 	const activeBlue = "#018FFF";
 	const errorRed = "#FF2121";
 	const successGreen = "#00C896";
@@ -87,6 +113,7 @@ export default function OtpInput({ length = 6, onChange, onComplete, error, isVe
 						value={values[i]}
 						onChange={(e) => setChar(i, e.target.value.slice(-1))}
 						onKeyDown={(e) => onKeyDown(i, e)}
+						onPaste={(e) => handlePaste(e, i)}
 						onFocus={() => setActive(i)}
 						inputMode="numeric"
 						pattern="[0-9]*"
