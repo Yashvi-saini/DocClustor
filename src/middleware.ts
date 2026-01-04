@@ -9,13 +9,14 @@ const publicRoutes = [
     '/verify',
     '/reset-password',
     '/oauth/callback',
-    '/api/auth',
+    '/dummydash',// bypassing login
+    '/individual/setup',//bypassing login
 ];
 
 const authRoutes = ['/login', '/signup', '/forgot-password', '/verify'];
 
 const flowProtectedRoutes = {
-    '/reset-password': 'reset_authorized', // Cookie name
+    '/reset-password': 'reset_authorized',
 };
 
 export function middleware(request: NextRequest) {

@@ -20,19 +20,18 @@ export default function OtpInput({ length = 6, onChange, onComplete, error, isVe
 		inputsRef.current[0]?.focus();
 	}, []);
 
-	useEffect(() => {
-		const code = values.join("");
-		onChange?.(code);
-		if (values.every((v) => v !== "")) {
-			onComplete?.(code);
-		}
-	}, [values, onChange, onComplete]);
-
 	const setChar = (idx: number, ch: string) => {
 		if (!/^[0-9]?$/.test(ch)) return;
 		const copy = [...values];
 		copy[idx] = ch;
 		setValues(copy);
+
+		const code = copy.join("");
+		onChange?.(code);
+		if (copy.every((v) => v !== "")) {
+			onComplete?.(code);
+		}
+
 		if (ch && idx < length - 1) {
 			inputsRef.current[idx + 1]?.focus();
 			setActive(idx + 1);
@@ -79,6 +78,13 @@ export default function OtpInput({ length = 6, onChange, onComplete, error, isVe
 		});
 
 		setValues(nextValues);
+		
+		const code = nextValues.join("");
+		onChange?.(code);
+		if (nextValues.every((v) => v !== "")) {
+			onComplete?.(code);
+		}
+
 		const nextFocus = Math.min(lastChangedIndex + 1, length - 1);
 		setActive(nextFocus);
 		inputsRef.current[nextFocus]?.focus();

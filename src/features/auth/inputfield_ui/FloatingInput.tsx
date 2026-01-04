@@ -80,6 +80,8 @@ export default function FloatingInput({
             "border",
             "bg-white",
             "border-[#999999]",
+            "h-[45px]",
+            "box-border",
             showEyeToggle ? "px-4 pt-3 pb-2 pr-11 text-[13px]" : "px-4 pt-3 pb-2 text-[13px]",
             showEyeToggle && type === "password" && !show
               ? "text-sm outline-none text-[#595959]"
