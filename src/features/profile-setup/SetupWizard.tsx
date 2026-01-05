@@ -49,7 +49,7 @@ export default function SetupWizard() {
         if (step === TOTAL_STEPS) {
             // Final Submit
             console.log("Submitting:", data);
-            router.push("/dummydash");
+            router.push("/individual/dashboard");
             return;
         }
         setStep((prev) => Math.min(prev + 1, TOTAL_STEPS));
