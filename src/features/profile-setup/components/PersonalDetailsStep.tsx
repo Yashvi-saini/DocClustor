@@ -12,6 +12,7 @@ import FloatingInput from "@/features/auth/inputfield_ui/FloatingInput";
 
 interface PersonalDetailsProps {
     data: {
+        avatar: string | null;
         fullName: string;
         phone: string;
         dob: string;
@@ -42,7 +43,7 @@ export function PersonalDetailsStep({ data, update }: PersonalDetailsProps) {
             <div className="flex justify-center">
                 <div className="w-[100px] h-[100px] rounded-full overflow-hidden border-4 border-[#0B76FF] bg-white flex items-center justify-center relative">
                     <Image
-                        src="/setup/profile.svg"
+                        src={data.avatar || "/setup/profile.svg"}
                         alt="Selected Avatar"
                         fill
                         className="object-cover"

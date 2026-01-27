@@ -73,7 +73,9 @@ export default function SetupWizard() {
     const renderStepContent = () => {
         switch (step) {
             case 1:
-                return <AvatarSelectionStep />;
+                return <AvatarSelectionStep 
+                avatar ={data.avatar} 
+                update={updateData} />;
             case 2:
                 return <PersonalDetailsStep data={data} update={updateData} />;
             case 3:
