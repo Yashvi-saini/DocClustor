@@ -10,8 +10,9 @@ const publicRoutes = [
     '/reset-password',
     '/oauth/callback',
     '/dummydash',// bypassing login
-    '/individual/setup',
-    '/individual/dashboard',//bypassing login
+    '/individual/setup', //bypassing login
+    '/individual/home',//bypassing login
+    '/individual/locker',//bypassing login
 ];
 
 const authRoutes = ['/login', '/signup', '/forgot-password', '/verify'];
