@@ -56,6 +56,9 @@ export default function DashboardTypeCard() {
                                 window.location.href = "/individual/setup";
 
                             }
+                            if(dashboard.title==="Company Dashboard"){
+                                window.location.href="/company/home";
+                            }
                         }}
                         className="group relative bg-[#E6E6E6] rounded-xl p-6 sm:p-8 md:p-10 lg:p-12 hover:bg-[#018FFF] hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 cursor-pointer"
                     >

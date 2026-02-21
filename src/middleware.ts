@@ -13,6 +13,8 @@ const publicRoutes = [
     '/individual/setup', //bypassing login
     '/individual/home',//bypassing login
     '/individual/locker',//bypassing login
+    '/company/home',//bypassing login
+    '/company/locker',//bypassing login
 ];
 
 const authRoutes = ['/login', '/signup', '/forgot-password', '/verify'];

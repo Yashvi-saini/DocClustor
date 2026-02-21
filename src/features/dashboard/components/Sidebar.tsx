@@ -14,18 +14,23 @@ interface SidebarItem {
     href: string;
 }
 
-const sidebarItems: SidebarItem[] = [
-    { label: "Home", iconPath: "/dashboard/home.svg", href: "/individual/home" },
-    { label: "Locker", iconPath: "/dashboard/locker.svg", href: "/individual/locker" },
-    { label: "Documents", iconPath: "/dashboard/documents.svg", href: "/individual/documents" },
-    { label: "RAG Bot", iconPath: "/dashboard/bot.svg", href: "/individual/rag-bot" },
-    { label: "Profile", iconPath: "/dashboard/profile.svg", href: "/individual/profile" },
-    { label: "Settings", iconPath: "/dashboard/settings.svg", href: "/individual/settings" },
+const getSidebarItems = (basePath: string): SidebarItem[] => [
+    { label: "Home", iconPath: "/dashboard/home.svg", href: `${basePath}/home` },
+    { label: "Locker", iconPath: "/dashboard/locker.svg", href: `${basePath}/locker` },
+    { label: "Documents", iconPath: "/dashboard/documents.svg", href: `${basePath}/documents` },
+    { label: "RAG Bot", iconPath: "/dashboard/bot.svg", href: `${basePath}/rag-bot` },
+    { label: "Profile", iconPath: "/dashboard/profile.svg", href: `${basePath}/profile` },
+    { label: "Settings", iconPath: "/dashboard/settings.svg", href: `${basePath}/settings` },
 ];
 
 export function Sidebar() {
     const pathname = usePathname();
     const [isCollapsed, setIsCollapsed] = useState(true);
+
+    // base path detect
+    const basePath = pathname?.startsWith("/company") ? "/company" : "/individual";
+    const sidebarItems = getSidebarItems(basePath);
+    
     const toggleSidebar = () => setIsCollapsed(!isCollapsed);
 
     return (
