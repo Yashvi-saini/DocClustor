@@ -1,9 +1,19 @@
+import { LockerUI } from "@/features/locker/components/LockerUI";
+import { BackgroundAnimation } from "@/components/ui/background-animation";
+import { Poppins } from "next/font/google";
+
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-poppins",
+});
+
 export default function LockerPage() {
   return (
-    <div className="max-w-6xl mx-auto space-y-6 py-3">
-      <h1 className="text-3xl font-bold text-black font-poppins">Locker</h1>
-      <div className="bg-white p-8 rounded-xl border border-gray-200 text-center text-gray-500">
-        <p>your personal locked docs will appear here</p>
+    <div className={`relative w-full overflow-hidden bg-[#F0F8FF] min-h-[calc(100vh-64px)] ${poppins.className}`}>
+      <BackgroundAnimation />
+      <div className="relative z-10 max-w-6xl mx-auto px-6 py-8 space-y-2">
+        <LockerUI />
       </div>
     </div>
   );

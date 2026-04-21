@@ -16,7 +16,8 @@ export interface FileItem {
 interface DashboardContextType {
     files: FileItem[];
     favorites: FileItem[];
-    addFile: (file: File) => void;
+    lockedFiles: FileItem[];
+    addFile: (file: File, isLocked?: boolean) => void;
     toggleFavorite: (id: string) => void;
     deleteFile: (id: string) => void;
 }
@@ -27,8 +28,9 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     const [files, setFiles] = useState<FileItem[]>([]);
 
     const favorites = files.filter((file) => file.isFavorite);
+    const lockedFiles = files.filter((file) => file.isLocked);
 
-    const addFile = (file: File) => {
+    const addFile = (file: File, isLocked: boolean = false) => {
         const newItem: FileItem = {
             id: Math.random().toString(36).substr(2, 9),
             name: file.name,
@@ -37,6 +39,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
             url: URL.createObjectURL(file), // Create a local URL for preview
             createdAt: new Date(),
             isFavorite: false,
+            isLocked: isLocked,
         };
         // Add to beginning of list
         setFiles((prev) => [newItem, ...prev]);
@@ -55,7 +58,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     }
 
     return (
-        <DashboardContext.Provider value={{ files, favorites, addFile, toggleFavorite, deleteFile }}>
+        <DashboardContext.Provider value={{ files, favorites, lockedFiles, addFile, toggleFavorite, deleteFile }}>
             {children}
         </DashboardContext.Provider>
     );
