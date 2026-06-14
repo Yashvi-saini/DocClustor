@@ -103,7 +103,7 @@ export function Sidebar() {
             <div className="p-4 border-t border-white/10">
                 <Button
                     className={cn(
-                        "w-full bg-[#018FFF] hover:bg-[#018FFF]/60 text-white font-bold transition-all shadow-lg shadow-blue-500/20",
+                        "w-full bg-[#1E9BFF] hover:bg-[#1E9BFF]/60 text-white font-bold transition-all shadow-lg shadow-blue-500/20",
                         isCollapsed ? "px-0 justify-center" : "gap-2"
                     )}
                 >

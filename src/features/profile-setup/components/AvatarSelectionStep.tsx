@@ -20,6 +20,8 @@ export function AvatarSelectionStep({ avatar, update }: AvatarSelectionStepProps
     "/setup/pf6.svg",
     "/setup/pf7.svg",
     "/setup/pf8.svg",
+    "/yashvi-avatar.png",
+    "/yashvi-anime-avatar.png",
   ];
 
   const [selectedImage, setSelectedImage] = useState<string | null>(avatar);

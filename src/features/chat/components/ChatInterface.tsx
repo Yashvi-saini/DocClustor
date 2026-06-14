@@ -80,10 +80,10 @@ export function ChatInterface() {
   };
 
   const faqs = [
-    { text: "Is there a free trial available?", icon: <Sparkles className="w-4 h-4 text-[#018FFF]" /> },
-    { text: "How is my data protected?", icon: <Shield className="w-4 h-4 text-[#018FFF]" /> },
-    { text: "Can I cancel my subscription at any time?", icon: <FileText className="w-4 h-4 text-[#018FFF]" /> },
-    { text: "What's New in DocClustor?", icon: <HelpCircle className="w-4 h-4 text-[#018FFF]" /> },
+    { text: "Is there a free trial available?", icon: <Sparkles className="w-4 h-4 text-[#1E9BFF]" /> },
+    { text: "How is my data protected?", icon: <Shield className="w-4 h-4 text-[#1E9BFF]" /> },
+    { text: "Can I cancel my subscription at any time?", icon: <FileText className="w-4 h-4 text-[#1E9BFF]" /> },
+    { text: "What's New in DocClustor?", icon: <HelpCircle className="w-4 h-4 text-[#1E9BFF]" /> },
   ];
 
   return (
@@ -103,55 +103,29 @@ export function ChatInterface() {
             {/* Content centered container */}
             <div className="w-full max-w-4xl px-8 flex flex-col gap-6 py-8">
                 
-                {/* FAQs Card */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden outline outline-1 outline-transparent hover:outline-[#018FFF]/20 transition-all">
-                    <div 
-                        className="px-6 py-4 flex justify-between items-center cursor-pointer border-b border-gray-50 bg-[#F8FAFC]"
-                        onClick={() => setShowFaq(!showFaq)}
-                    >
-                        <h4 className="font-bold text-[#003259] text-sm md:text-base">What do you want to know?</h4>
-                        <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${showFaq ? 'rotate-180' : ''}`} />
-                    </div>
-                    
-                    {showFaq && (
-                        <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-2">
-                            {faqs.map((faq, idx) => (
-                                <div key={idx} className="flex items-center gap-3 cursor-pointer group p-3 border border-transparent hover:border-gray-100 rounded-lg hover:shadow-sm hover:bg-white transition-all bg-transparent">
-                                    <div className="bg-[#F4F7FD] p-2 rounded-lg group-hover:bg-[#E5F3FF] transition-colors">
-                                        {faq.icon}
-                                    </div>
-                                    <span className="text-[13px] font-semibold text-[#003259] group-hover:text-[#018FFF] transition-colors">
-                                        {faq.text}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
+
 
                 {/* Start Chat Button */}
                 <div 
                     onClick={handleStartChat}
-                    className="bg-white rounded-xl shadow-sm border border-gray-100 px-6 py-4 flex justify-between items-center cursor-pointer hover:border-[#018FFF]/30 hover:bg-[#F9FCFF] transition-all group"
+                    className="bg-white rounded-xl shadow-sm border border-gray-100 px-6 py-4 flex justify-between items-center cursor-pointer hover:border-[#1E9BFF]/30 hover:bg-[#F9FCFF] transition-all group"
                 >
                     <div className="flex items-center gap-4">
                        <div className="bg-[#003259] w-10 h-10 rounded-full flex items-center justify-center shadow-sm">
                           <Image src="/dashboard/bot.svg" alt="Bot" width={18} height={18} style={{ filter: "brightness(0) invert(1)"}} />
                        </div>
                        <div>
-                          <h4 className="font-bold text-[#003259] text-sm group-hover:text-[#018FFF] transition-colors">Talk with chatbot</h4>
+                          <h4 className="font-bold text-[#003259] text-sm group-hover:text-[#1E9BFF] transition-colors">Talk with chatbot</h4>
                           <p className="text-[12px] text-gray-500 mt-0.5">The chatbot will respond immediately.</p>
                        </div>
                     </div>
-                    <div className="w-8 h-8 rounded-full bg-[#F4F7FD] group-hover:bg-[#018FFF] flex items-center justify-center transition-colors">
-                       <ChevronRight className="w-5 h-5 text-[#018FFF] group-hover:text-white transition-colors" />
+                    <div className="w-8 h-8 rounded-full bg-[#F4F7FD] group-hover:bg-[#1E9BFF] flex items-center justify-center transition-colors">
+                       <ChevronRight className="w-5 h-5 text-[#1E9BFF] group-hover:text-white transition-colors" />
                     </div>
                 </div>
             </div>
             
-            <div className="mt-auto py-6 text-center text-[11px] text-gray-400 font-medium">
-                Powered by <span className="font-bold text-[#003259]">DocClustor AI</span>
-            </div>
+
         </div>
       )}
 
@@ -203,7 +177,7 @@ export function ChatInterface() {
                                 {/* Message Bubble */}
                                 <div className={"px-5 py-3.5 text-[14px] font-medium leading-relaxed shadow-sm " + 
                                     (msg.role === 'user' 
-                                        ? "bg-[#018FFF] text-white rounded-2xl rounded-tr-sm shadow-[0_2px_10px_rgba(1,143,255,0.15)]" 
+                                        ? "bg-[#1E9BFF] text-white rounded-2xl rounded-tr-sm shadow-[0_2px_10px_rgba(1,143,255,0.15)]" 
                                         : "bg-white text-[#003259] rounded-2xl rounded-tl-sm border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]")}>
                                     <p>{msg.content}</p>
                                 </div>
@@ -239,7 +213,7 @@ export function ChatInterface() {
             {/* Input Area */}
             <div className="p-4 sm:p-5 bg-white border-t border-gray-100 shrink-0 z-10">
                 <div className="w-full px-2 md:px-8 relative">
-                    <div className="flex items-center bg-[#F8FAFC] border border-gray-200 rounded-2xl pr-3 pl-6 transition-colors focus-within:border-[#018FFF]/50 focus-within:bg-white focus-within:shadow-sm">
+                    <div className="flex items-center bg-[#F8FAFC] border border-gray-200 rounded-2xl pr-3 pl-6 transition-colors focus-within:border-[#1E9BFF]/50 focus-within:bg-white focus-within:shadow-sm">
                         <input
                             type="text"
                             value={inputValue}
@@ -267,7 +241,7 @@ export function ChatInterface() {
                                 disabled={!inputValue.trim() || isTyping}
                                 className={`ml-1 w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
                                     inputValue.trim() && !isTyping 
-                                        ? 'bg-[#018FFF] text-white shadow-md hover:bg-[#018FFF]/80' 
+                                        ? 'bg-[#1E9BFF] text-white shadow-md hover:bg-[#1E9BFF]/80' 
                                         : 'bg-transparent text-gray-300'
                                 }`}
                             >
