@@ -1,0 +1,65 @@
+// ─── Prisma Schema ─────────────────────────────────────────────────────────────
+//
+// This file defines ALL your database tables and their relationships.
+// Think of it as a blueprint for your database.
+//
+// After changing this file, run:
+//   npx prisma db push       → Pushes changes to the database
+//   npx prisma generate      → Generates the TypeScript client
+//   npx prisma studio        → Opens a visual GUI to browse your data
+// ──────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // NOTE: In Prisma 7, the URL is configured in prisma.config.ts (for CLI)
+  // and passed to PrismaClient constructor (for runtime). See backend/db/prisma.ts
+}
+
+// ── User ─────────────────────────────────────────────────────────────────────
+// Every person who registers in the app gets a row here.
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  name          String?
+  password      String?  // Nullable for OAuth users (Google/GitHub login)
+  role          String   @default("INDIVIDUAL") // "COMPANY" or "INDIVIDUAL"
+  emailVerified Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relationships — a user can have many documents
+  documents Document[]
+}
+
+// ── Document ─────────────────────────────────────────────────────────────────
+// Files/text that users upload for the RAG system to learn from.
+model Document {
+  id        String   @id @default(uuid())
+  title     String
+  content   String   @db.Text  // Can hold large text content
+  type      String   @default("TEXT") // "PDF", "TEXT", "DOCX"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationship — each document belongs to one user
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ── OtpVerification ─────────────────────────────────────────────────────────
+// Stores generated OTP codes for email verification, logins, or password resets.
+model OtpVerification {
+  id        String   @id @default(uuid())
+  email     String
+  otp       String
+  purpose   String   // "register" or "login" or "forgot"
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@unique([email, purpose])
+}
+
