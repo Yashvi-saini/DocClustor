@@ -1,17 +1,12 @@
-// ─── POST /api/rag/query ───────────────────────────────────────────────────────
-//
-// The main RAG (AI chat) endpoint.
-// User sends a question → we find relevant documents → AI answers based on them.
-// Protected: must be logged in.
-// ──────────────────────────────────────────────────────────────────────────────
-
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth, unauthorized } from '@backend/middleware/auth.middleware';
+import { requireWorkspace, handleWorkspaceError } from '@backend/middleware/workspace';
 import { queryRag } from '@backend/services/rag.service';
+
+// POST /api/rag/query
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await requireAuth(request);
+    const workspaceContext = await requireWorkspace(request);
     const body = await request.json();
 
     if (!body.question || typeof body.question !== 'string') {
@@ -23,7 +18,7 @@ export async function POST(request: NextRequest) {
 
     const result = await queryRag({
       question: body.question,
-      userId: user.userId,
+      workspaceContext,
     });
 
     return NextResponse.json({
@@ -31,7 +26,7 @@ export async function POST(request: NextRequest) {
       message: 'Query processed',
       data: result,
     });
-  } catch {
-    return unauthorized();
+  } catch (error: unknown) {
+    return handleWorkspaceError(error);
   }
 }

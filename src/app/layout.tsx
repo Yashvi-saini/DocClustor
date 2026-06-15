@@ -66,6 +66,8 @@ export const metadata: Metadata = {
   manifest: "/site.webmanifest",
 };
 
+import { WorkspaceProvider } from "@/context/WorkspaceContext";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -76,7 +78,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} antialiased`}
       >
-        {children}
+        <WorkspaceProvider>
+          {children}
+        </WorkspaceProvider>
         <Toaster position="top-right" />
       </body>
     </html>

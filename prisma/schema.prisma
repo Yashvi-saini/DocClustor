@@ -1,57 +1,212 @@
-// ─── Prisma Schema ─────────────────────────────────────────────────────────────
-//
-// This file defines ALL your database tables and their relationships.
-// Think of it as a blueprint for your database.
-//
-// After changing this file, run:
-//   npx prisma db push       → Pushes changes to the database
-//   npx prisma generate      → Generates the TypeScript client
-//   npx prisma studio        → Opens a visual GUI to browse your data
-// ──────────────────────────────────────────────────────────────────────────────
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  // NOTE: In Prisma 7, the URL is configured in prisma.config.ts (for CLI)
-  // and passed to PrismaClient constructor (for runtime). See backend/db/prisma.ts
 }
 
-// ── User ─────────────────────────────────────────────────────────────────────
-// Every person who registers in the app gets a row here.
+//  USER 
+
 model User {
+  id              String    @id @default(uuid())
+  email           String    @unique
+  name            String?
+  password        String?   // Nullable for OAuth users 
+  avatar          String?
+  phone           String?
+  dob             DateTime?
+  emailVerified   Boolean   @default(false)
+  profileComplete Boolean   @default(false)   // Set true after onboarding wizard
+  masterPinHash   String?                      // PBKDF2-derived hash of master PIN
+  masterPinSalt   String?                      // 32-byte random salt for PBKDF2 (S1)
+  tokenVersion    Int       @default(0)        // Increment to force re-login (S4)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  digilockerLinked Boolean  @default(false)
+  digilockerToken  String?  // AES-256-GCM encrypted OAuth refresh token
+
+  // Relationships
+  documents       Document[]      // Docs in personal workspace
+  uploadedDocs    Document[]      @relation("uploadedDocs") // Docs uploaded in org context
+  lockers         Locker[]
+  chatSessions    ChatSession[]
+  memberships     OrgMembership[]
+  auditLogs       AuditLog[]
+}
+
+//ORGANISATION
+
+
+model Organisation {
   id            String   @id @default(uuid())
-  email         String   @unique
-  name          String?
-  password      String?  // Nullable for OAuth users (Google/GitHub login)
-  role          String   @default("INDIVIDUAL") // "COMPANY" or "INDIVIDUAL"
-  emailVerified Boolean  @default(false)
+  name          String
+  slug          String   @unique 
+  cin           String?           
+  gstin         String?           
+  logo          String?          
+  industry      String?
+  storageQuota  BigInt   @default(10737418240) // 10 GB in bytes
+  masterPinHash String?           // PBKDF2-derived hash for org-wide locker
+  masterPinSalt String?           // 32-byte random salt (S1)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  // Relationships — a user can have many documents
-  documents Document[]
+  // Relationships
+  members       OrgMembership[]
+  documents     Document[]
+  lockers       Locker[]
+  chatSessions  ChatSession[]
+  auditLogs     AuditLog[]
 }
 
-// ── Document ─────────────────────────────────────────────────────────────────
-// Files/text that users upload for the RAG system to learn from.
-model Document {
+// ─── ORG MEMBERSHIP (User <-> Organisation bridge) 
+
+model OrgMembership {
   id        String   @id @default(uuid())
-  title     String
-  content   String   @db.Text  // Can hold large text content
-  type      String   @default("TEXT") // "PDF", "TEXT", "DOCX"
+  userId    String
+  orgId     String
+  role      OrgRole  @default(VIEWER)
+  joinedAt  DateTime @default(now())
+
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  org  Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, orgId])
+}
+
+enum OrgRole {
+  OWNER   // Created the org, full control, cannot be removed
+  ADMIN   // Can manage members, docs, settings
+  EDITOR  // Can upload/edit documents, use RAG
+  VIEWER  // Read-only access to shared docs
+}
+
+//  DOCUMENT (Workspace-Scoped)
+
+model Document {
+  id          String    @id @default(uuid())
+  title       String
+  content     String    @db.Text   // Full text content (for RAG indexing)
+  type        DocType   @default(TEXT)
+  isEncrypted Boolean   @default(false)
+  vectorId    String?              // pgvector chunk ID for RAG retrieval
+  source      DocSource @default(UPLOAD)
+  fileUrl     String?              // Supabase Storage signed path
+  fileSize    BigInt    @default(0)
+  mimeType    String?              // Validated via magic bytes, not extension (S5)
+
+  // WORKSPACE CONTEXT — exactly ONE of userId/orgId is set
+  userId       String?  // Set when doc belongs to personal workspace
+  orgId        String?  // Set when doc belongs to org workspace
+  lockerId     String?  // Set when doc is inside a locker
+
+  // ORG DOCUMENT VISIBILITY — who within the org can see this doc
+  uploadedById String?               // Who uploaded this (needed for PRIVATE in orgs)
+  visibility   DocVisibility @default(SHARED)
+
+  // Relations
+  user        User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  uploadedBy  User?         @relation("uploadedDocs", fields: [uploadedById], references: [id])
+  org         Organisation? @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  locker      Locker?       @relation(fields: [lockerId], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([orgId])
+  @@index([uploadedById])
+}
+
+enum DocType {
+  PDF
+  TEXT
+  DOCX
+  IMAGE
+}
+
+enum DocSource {
+  UPLOAD
+  DIGILOCKER
+}
+
+enum DocVisibility {
+  SHARED      
+  PRIVATE     
+  ADMIN_ONLY  
+}
+
+// LOCKER (PIN-Protected Vault)
+
+model Locker {
+  id        String   @id @default(uuid())
+  name      String
+  pinHash   String   // PBKDF2-derived hash (NOT raw bcrypt of a short PIN)
+  pinSalt   String   // 32-byte random salt, unique per locker
+
+  // WORKSPACE CONTEXT
+  userId    String?  // Personal locker
+  orgId     String?  // Org locker
+
+  user      User?         @relation(fields: [userId], references: [id])
+  org       Organisation? @relation(fields: [orgId], references: [id])
+  documents Document[]
+
+  // Brute-force protection
+  failedAttempts Int       @default(0)
+  lockedUntil    DateTime? // null = not locked out
+
+  createdAt DateTime @default(now())
+}
+
+// RAG CHAT SESSION
+
+model ChatSession {
+  id        String   @id @default(uuid())
+  title     String   @default("New Chat")
+
+  // WORKSPACE CONTEXT
+  userId    String?  // Personal chat session
+  orgId     String?  // Org chat session
+
+  user      User?         @relation(fields: [userId], references: [id])
+  org       Organisation? @relation(fields: [orgId], references: [id])
+  messages  ChatMessage[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  // Relationship — each document belongs to one user
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// ── OtpVerification ─────────────────────────────────────────────────────────
-// Stores generated OTP codes for email verification, logins, or password resets.
+model ChatMessage {
+  id        String   @id @default(uuid())
+  sessionId String
+  role      String   // "user" | "assistant"
+  content   String   @db.Text
+  sources   Json?    // [{docId, title, snippet, workspaceName}]
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+//AUDIT LOG (Organisation Compliance) 
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  action    String   // "OPENED_LOCKER", "VIEWED_DOC", "UPLOADED_DOC", "DELETED_DOC", etc.
+  targetId  String?  // ID of the affected resource
+  metadata  Json?    // Additional context (e.g., { fileName: "Q3 Report.pdf" })
+  ip        String?  // Client IP for security auditing
+
+  userId    String   // Who performed the action
+  orgId     String?  // Which org context (null = personal action, not logged normally)
+
+  user      User          @relation(fields: [userId], references: [id])
+  org       Organisation? @relation(fields: [orgId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+// OTP VERIFICATION (Unchanged from v1) 
 model OtpVerification {
   id        String   @id @default(uuid())
   email     String
@@ -62,4 +217,3 @@ model OtpVerification {
 
   @@unique([email, purpose])
 }
-

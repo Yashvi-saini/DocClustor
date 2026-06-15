@@ -1,9 +1,3 @@
-// ─── POST /api/auth/logout ─────────────────────────────────────────────────────
-//
-// Logs the user out by clearing the auth cookie.
-// Since the JWT lives in an HttpOnly cookie, we just delete that cookie.
-// ──────────────────────────────────────────────────────────────────────────────
-
 import { NextResponse } from 'next/server';
 
 export async function POST() {

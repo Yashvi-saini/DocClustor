@@ -1,8 +1,3 @@
-// ─── POST /api/auth/verify-otp ──────────────────────────────────────────────────
-//
-// Verifies if the provided OTP code matches the database record and is active.
-// ──────────────────────────────────────────────────────────────────────────────
-
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyOtpInDb } from '@backend/services/otp.service';
 

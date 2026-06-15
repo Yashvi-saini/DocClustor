@@ -1,8 +1,3 @@
-// ─── POST /api/auth/send-otp ───────────────────────────────────────────────────
-//
-// Handles generating and sending a real verification OTP to the user's email.
-// ──────────────────────────────────────────────────────────────────────────────
-
 import { NextRequest, NextResponse } from 'next/server';
 import { createAndSendOtp } from '@backend/services/otp.service';
 

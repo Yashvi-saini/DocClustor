@@ -4,7 +4,7 @@ import { registerUser } from '@backend/services/auth.service';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, password, name, username, role } = body;
+    const { email, password, name, username } = body;
     const resolvedName = name || username;
 
     if (!email || !password || !resolvedName) {
@@ -18,7 +18,6 @@ export async function POST(request: NextRequest) {
       email,
       password,
       name: resolvedName,
-      role: role || 'INDIVIDUAL',
     });
 
     return NextResponse.json(

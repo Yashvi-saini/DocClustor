@@ -1,13 +1,3 @@
-// ─── Server-Side TypeScript Types ─────────────────────────────────────────────
-//
-// WHY THIS FILE EXISTS:
-// These types are used ONLY by our backend (API routes + services).
-// They describe the shape of request bodies, responses, and internal data.
-// Keeping them here separate from frontend types prevents accidentally
-// importing server-only code into browser bundles.
-// ──────────────────────────────────────────────────────────────────────────────
-
-// ── Standard API Response wrapper ───────────────────────────────────────────
 export interface ApiResponse<T = null> {
   success: boolean;
   message: string;
@@ -15,12 +5,12 @@ export interface ApiResponse<T = null> {
   errors?: Record<string, string[]>;
 }
 
-// ── Auth ─────────────────────────────────────────────────────────────────────
+// Auth 
+
 export interface RegisterPayload {
   email: string;
   password: string;
   name: string;
-  role: 'COMPANY' | 'INDIVIDUAL';
 }
 
 export interface LoginPayload {
@@ -33,26 +23,80 @@ export interface OtpPayload {
   otp: string;
 }
 
+//JWT
 export interface JwtPayload {
   userId: string;
   email: string;
-  role: string;
+  profileComplete: boolean;
+  tokenVersion: number;     // S4: for instant session revocation
   iat?: number;
   exp?: number;
 }
 
-// ── User ─────────────────────────────────────────────────────────────────────
+//User Profile 
+
 export interface UserProfile {
   id: string;
   email: string;
   name: string | null;
-  role: string;
+  avatar: string | null;
+  phone: string | null;
+  dob: Date | null;
+  profileComplete: boolean;
+  digilockerLinked: boolean;
   createdAt: Date;
 }
 
-// ── Documents ────────────────────────────────────────────────────────────────
+export interface ProfileUpdatePayload {
+  name?: string;
+  avatar?: string;
+  phone?: string;
+  dob?: string;     // ISO date string
+}
+
+// Data sent when completing the onboarding wizard
+export interface OnboardingCompletePayload {
+  avatar?: string;
+  phone?: string;
+  dob?: string;       // ISO date string
+  masterPin: string;   // 4-6 digit PIN (will be PBKDF2-hashed server-side)
+}
+
+// Workspace 
+
+export type WorkspaceContext =
+  | { type: 'personal'; userId: string }
+  | { type: 'org'; orgId: string; userId: string; memberRole: string };
+
+// What the workspace list API returns
+export interface WorkspaceListItem {
+  type: 'personal' | 'org';
+  id: string;           // userId for personal, orgId for org
+  name: string;         // "Personal Space" or org name
+  logo?: string | null;
+  role?: string;        // OrgRole for org workspaces
+}
+
+// Organisation
+
+export interface OrgCreatePayload {
+  name: string;
+  cin?: string;
+  gstin?: string;
+  industry?: string;
+  logo?: string;
+}
+
+export interface OrgInvitePayload {
+  email: string;
+  role: 'ADMIN' | 'EDITOR' | 'VIEWER';
+}
+
+//Documents 
+
 export interface DocumentUploadPayload {
   title: string;
-  content: string; // base64 or text content
-  type: 'PDF' | 'TEXT' | 'DOCX';
+  content: string;       // base64 or text content
+  type: 'PDF' | 'TEXT' | 'DOCX' | 'IMAGE';
+  visibility?: 'SHARED' | 'PRIVATE' | 'ADMIN_ONLY';
 }

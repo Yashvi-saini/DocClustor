@@ -1,17 +1,9 @@
-// ─── GET + PATCH /api/users/me ─────────────────────────────────────────────────
-//
-// GET   → Returns the logged-in user's profile data
-// PATCH → Update the user's profile (name, etc.)
-//
-// The "me" pattern is standard — instead of /api/users/:id you say /api/users/me
-// which automatically refers to whoever is currently logged in.
-// ──────────────────────────────────────────────────────────────────────────────
-
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, unauthorized } from '@backend/middleware/auth.middleware';
-import { getUserById, updateUserProfile } from '@backend/services/user.service';
+import { getUserById } from '@backend/services/user.service';
+import { updateProfile } from '@backend/services/profile.service';
 
-// ── GET /api/users/me ─────────────────────────────────────────────────────────
+// GET /api/users/me 
 export async function GET(request: NextRequest) {
   try {
     const jwtPayload = await requireAuth(request);
@@ -26,7 +18,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'Profile fetched',
+      message: 'Profile fetched successfully',
       data: { user },
     });
   } catch {
@@ -34,14 +26,17 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// ── PATCH /api/users/me ───────────────────────────────────────────────────────
+// PATCH /api/users/me
 export async function PATCH(request: NextRequest) {
   try {
     const jwtPayload = await requireAuth(request);
     const body = await request.json();
 
-    const updated = await updateUserProfile(jwtPayload.userId, {
+    const updated = await updateProfile(jwtPayload.userId, {
       name: body.name,
+      avatar: body.avatar,
+      phone: body.phone,
+      dob: body.dob,
     });
 
     return NextResponse.json({

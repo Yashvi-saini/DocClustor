@@ -1,17 +1,6 @@
-// ─── Auth Input Validators ─────────────────────────────────────────────────────
-//
-// WHY THIS FILE EXISTS:
-// NEVER trust data coming from the client. Users can send literally anything.
-// Before processing a login/register request, we validate that the data
-// matches what we expect (valid email format, password length, etc.)
-//
-// We use Zod — a TypeScript-first validation library already in your project.
-// It's like a bouncer at a club: checks IDs before letting anyone in.
-// ──────────────────────────────────────────────────────────────────────────────
-
 import { z } from 'zod';
 
-// ── Register Validation ────────────────────────────────────────────────────────
+//  Register Validation
 export const registerSchema = z.object({
   email: z.string().email('Please provide a valid email address'),
   password: z
@@ -23,19 +12,19 @@ export const registerSchema = z.object({
   role: z.enum(['COMPANY', 'INDIVIDUAL']).optional().default('INDIVIDUAL'),
 });
 
-// ── Login Validation ───────────────────────────────────────────────────────────
+// Login Validation 
 export const loginSchema = z.object({
   email: z.string().email('Please provide a valid email address'),
   password: z.string().min(1, 'Password is required'),
 });
 
-// ── OTP Validation ─────────────────────────────────────────────────────────────
+// OTP Validation 
 export const otpSchema = z.object({
   email: z.string().email('Please provide a valid email address'),
   otp: z.string().length(6, 'OTP must be exactly 6 digits'),
 });
 
-// ── Helper: Run validation and return clean errors ─────────────────────────────
+// Run validation and return clean errors
 export function validate<T>(schema: z.ZodSchema<T>, data: unknown): { data: T; errors: null } | { data: null; errors: Record<string, string[]> } {
   const result = schema.safeParse(data);
   if (result.success) {

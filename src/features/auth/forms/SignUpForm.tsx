@@ -29,7 +29,7 @@ export default function RegisterForm() {
     reValidateMode: "onChange",
     defaultValues: {
       email: "",
-      username: "",
+      name: "",
       password: "",
       confirmPassword: "",
       agree: false,
@@ -37,7 +37,7 @@ export default function RegisterForm() {
   });
 
   const emailValue = watch("email");
-  const usernameValue = watch("username");
+  const nameValue = watch("name");
 
   // Simulate initial loading
   React.useEffect(() => {
@@ -60,7 +60,7 @@ export default function RegisterForm() {
     try {
       const response = await authService.register({
         email: data.email,
-        username: data.username,
+        name: data.name,
         password: data.password,
       });
 
@@ -146,13 +146,13 @@ export default function RegisterForm() {
           />
 
           <IdentifierInput
-            name="username"
-            label="Enter Username"
+            name="name"
+            label="Enter Full Name"
             type="text"
-            register={register("username")}
-            error={errors.username?.message}
-            value={usernameValue}
-            maxLength={30}
+            register={register("name")}
+            error={errors.name?.message}
+            value={nameValue}
+            maxLength={50}
           />
 
           <PasswordInput

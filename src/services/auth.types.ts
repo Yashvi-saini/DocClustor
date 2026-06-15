@@ -1,7 +1,7 @@
 
 export interface RegisterRequest {
     email: string;
-    username: string;
+    name: string;
     password: string;
 }
 
@@ -36,7 +36,8 @@ export interface ResetPasswordRequest {
 export interface AuthUser {
     id: string;
     email: string;
-    username: string;
+    name?: string | null;
+    profileComplete: boolean;
 }
 
 export interface AuthUserResponse {

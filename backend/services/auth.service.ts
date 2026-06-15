@@ -6,13 +6,42 @@ import * as jose from 'jose';
 const JWT_SECRET = process.env.JWT_SECRET!;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
-async function createToken(payload: { userId: string; email: string; role: string }) {
+export async function createToken(payload: {
+  userId: string;
+  email: string;
+  profileComplete: boolean;
+  tokenVersion: number;
+}) {
   const secret = new TextEncoder().encode(JWT_SECRET);
   return await new jose.SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime(JWT_EXPIRES_IN)
     .sign(secret);
+}
+
+function toUserProfile(user: {
+  id: string;
+  email: string;
+  name: string | null;
+  avatar: string | null;
+  phone: string | null;
+  dob: Date | null;
+  profileComplete: boolean;
+  digilockerLinked: boolean;
+  createdAt: Date;
+}): UserProfile {
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    avatar: user.avatar,
+    phone: user.phone,
+    dob: user.dob,
+    profileComplete: user.profileComplete,
+    digilockerLinked: user.digilockerLinked,
+    createdAt: user.createdAt,
+  };
 }
 
 export async function registerUser(data: RegisterPayload): Promise<{ user: UserProfile; token: string }> {
@@ -28,15 +57,16 @@ export async function registerUser(data: RegisterPayload): Promise<{ user: UserP
       data: {
         name: data.name,
         password: hashedPassword,
-        role: data.role,
       },
     });
 
-    const token = await createToken({ userId: user.id, email: user.email, role: user.role });
-    return {
-      user: { id: user.id, email: user.email, name: user.name, role: user.role, createdAt: user.createdAt },
-      token,
-    };
+    const token = await createToken({
+      userId: user.id,
+      email: user.email,
+      profileComplete: user.profileComplete,
+      tokenVersion: user.tokenVersion,
+    });
+    return { user: toUserProfile(user), token };
   }
 
   const hashedPassword = await bcrypt.hash(data.password, 12);
@@ -46,17 +76,19 @@ export async function registerUser(data: RegisterPayload): Promise<{ user: UserP
       email: data.email,
       name: data.name,
       password: hashedPassword,
-      role: data.role,
       emailVerified: false,
+      profileComplete: false,
     },
   });
 
-  const token = await createToken({ userId: user.id, email: user.email, role: user.role });
+  const token = await createToken({
+    userId: user.id,
+    email: user.email,
+    profileComplete: user.profileComplete,
+    tokenVersion: user.tokenVersion,
+  });
 
-  return {
-    user: { id: user.id, email: user.email, name: user.name, role: user.role, createdAt: user.createdAt },
-    token,
-  };
+  return { user: toUserProfile(user), token };
 }
 
 export async function loginUser(data: LoginPayload): Promise<{ user: UserProfile; token: string }> {
@@ -74,12 +106,14 @@ export async function loginUser(data: LoginPayload): Promise<{ user: UserProfile
     throw new Error('Email not verified. Please verify your email first.');
   }
 
-  const token = await createToken({ userId: user.id, email: user.email, role: user.role });
+  const token = await createToken({
+    userId: user.id,
+    email: user.email,
+    profileComplete: user.profileComplete,
+    tokenVersion: user.tokenVersion,
+  });
 
-  return {
-    user: { id: user.id, email: user.email, name: user.name, role: user.role, createdAt: user.createdAt },
-    token,
-  };
+  return { user: toUserProfile(user), token };
 }
 
 export async function markEmailAsVerified(email: string): Promise<{ user: UserProfile; token: string }> {
@@ -88,12 +122,14 @@ export async function markEmailAsVerified(email: string): Promise<{ user: UserPr
     data: { emailVerified: true },
   });
 
-  const token = await createToken({ userId: user.id, email: user.email, role: user.role });
+  const token = await createToken({
+    userId: user.id,
+    email: user.email,
+    profileComplete: user.profileComplete,
+    tokenVersion: user.tokenVersion,
+  });
 
-  return {
-    user: { id: user.id, email: user.email, name: user.name, role: user.role, createdAt: user.createdAt },
-    token,
-  };
+  return { user: toUserProfile(user), token };
 }
 
 export async function resetUserPassword(email: string, password: string): Promise<boolean> {
@@ -108,8 +144,18 @@ export async function resetUserPassword(email: string, password: string): Promis
     where: { email },
     data: {
       password: hashedPassword,
+      tokenVersion: { increment: 1 }, // Invalidates existing sessions
     },
   });
 
   return true;
+}
+
+export async function verifyTokenVersion(userId: string, tokenVersion: number): Promise<boolean> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { tokenVersion: true },
+  });
+  if (!user) return false;
+  return user.tokenVersion === tokenVersion;
 }

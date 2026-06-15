@@ -15,16 +15,12 @@ export const emailField = z
     })
     .email("Please enter a valid email ID");
 
-export const usernameField = z
+export const nameField = z
     .string()
     .trim()
-    .min(1, "Username is required")
-    .min(3, "Username must be at least 3 characters")
-    .max(30, "Username must be under 30 characters")
-    .regex(
-        /^[a-zA-Z0-9_-]+$/,
-        "Username can only contain letters, numbers, hyphens, and underscores"
-    )
+    .min(1, "Name is required")
+    .min(2, "Name must be at least 2 characters")
+    .max(50, "Name must be under 50 characters")
     .and(noEmoji);
 
 export const strongPasswordField = z
@@ -73,7 +69,7 @@ export type LoginSchemaType = z.infer<typeof loginSchema>;
 export const signupSchema = z
     .object({
         email: emailField,
-        username: usernameField,
+        name: nameField,
         password: strongPasswordField,
         confirmPassword: confirmPasswordField,
         agree: z.boolean().refine((val) => val === true, {
@@ -122,7 +118,7 @@ export const authSchemas = {
 
 export const authFields = {
     email: emailField,
-    username: usernameField,
+    name: nameField,
     strongPassword: strongPasswordField,
     simplePassword: simplePasswordField,
     confirmPassword: confirmPasswordField,
