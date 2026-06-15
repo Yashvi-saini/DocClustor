@@ -75,7 +75,7 @@ export async function middleware(request: NextRequest) {
   // Case 2: Authenticated but trying to access login/signup
   if (isAuthRoute && decoded) {
     if (decoded.profileComplete) {
-      return NextResponse.redirect(new URL('/dashboard/home', request.url));
+      return NextResponse.redirect(new URL('/individual/home', request.url));
     } else {
       return NextResponse.redirect(new URL('/onboarding', request.url));
     }

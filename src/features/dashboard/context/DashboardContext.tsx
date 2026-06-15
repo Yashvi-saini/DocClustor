@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from "react";
 import { useWorkspace } from "@/context/WorkspaceContext";
 import toast from "react-hot-toast";
 
@@ -66,7 +66,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     // User profile state
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
-    const getHeaders = () => {
+    const getHeaders = useCallback(() => {
         const headers: HeadersInit = {
             "Content-Type": "application/json",
         };
@@ -74,9 +74,9 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
             headers["X-Workspace-Context"] = activeWorkspace.type === "personal" ? "personal" : `org:${activeWorkspace.id}`;
         }
         return headers;
-    };
+    }, [activeWorkspace]);
 
-    const fetchDocuments = async () => {
+    const fetchDocuments = useCallback(async () => {
         if (!activeWorkspace) return;
         try {
             const res = await fetch("/api/documents", {
@@ -100,9 +100,9 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         } catch (error) {
             console.error("Failed to fetch documents:", error);
         }
-    };
+    }, [activeWorkspace, getHeaders]);
 
-    const checkLockerStatus = async () => {
+    const checkLockerStatus = useCallback(async () => {
         if (!activeWorkspace) return;
         try {
             const res = await fetch("/api/locker/status", {
@@ -122,9 +122,9 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         } catch (error) {
             console.error("Failed to fetch locker status:", error);
         }
-    };
+    }, [activeWorkspace, getHeaders]);
 
-    const fetchUserProfile = async () => {
+    const fetchUserProfile = useCallback(async () => {
         try {
             const res = await fetch("/api/users/me");
             const json = await res.json();
@@ -143,9 +143,9 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         } catch (error) {
             console.error("Failed to fetch user profile:", error);
         }
-    };
+    }, []);
 
-    const updateUserProfile = async (data: Partial<UserProfile>): Promise<boolean> => {
+    const updateUserProfile = useCallback(async (data: Partial<UserProfile>): Promise<boolean> => {
         try {
             const res = await fetch("/api/users/me", {
                 method: "PATCH",
@@ -166,21 +166,21 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
             toast.error(error.message || "Update failed");
             return false;
         }
-    };
+    }, [fetchUserProfile]);
 
     useEffect(() => {
         fetchDocuments();
         checkLockerStatus();
-    }, [activeWorkspace]);
+    }, [fetchDocuments, checkLockerStatus]);
 
     useEffect(() => {
         fetchUserProfile();
-    }, []);
+    }, [fetchUserProfile]);
 
-    const favorites = files.filter((file) => file.isFavorite);
-    const lockedFiles = files.filter((file) => file.isLocked);
+    const favorites = useMemo(() => files.filter((file) => file.isFavorite), [files]);
+    const lockedFiles = useMemo(() => files.filter((file) => file.isLocked), [files]);
 
-    const addFile = async (file: File, isLocked: boolean = false) => {
+    const addFile = useCallback(async (file: File, isLocked: boolean = false) => {
         if (!activeWorkspace) {
             toast.error("No active workspace selected");
             return;
@@ -238,9 +238,9 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         } else {
             reader.readAsDataURL(file);
         }
-    };
+    }, [activeWorkspace, getHeaders, fetchDocuments]);
 
-    const toggleFavorite = (id: string) => {
+    const toggleFavorite = useCallback((id: string) => {
         setFiles((prev) =>
             prev.map((file) => {
                 if (file.id === id) {
@@ -251,9 +251,9 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
                 return file;
             })
         );
-    };
+    }, []);
 
-    const deleteFile = async (id: string) => {
+    const deleteFile = useCallback(async (id: string) => {
         try {
             const res = await fetch(`/api/documents?id=${id}`, {
                 method: "DELETE",
@@ -269,9 +269,9 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
             console.error("Delete failed:", error);
             toast.error(error.message || "Delete failed");
         }
-    };
+    }, [getHeaders, fetchDocuments]);
 
-    const unlockLocker = async (pin: string): Promise<boolean> => {
+    const unlockLocker = useCallback(async (pin: string): Promise<boolean> => {
         try {
             const res = await fetch("/api/locker/unlock", {
                 method: "POST",
@@ -290,9 +290,9 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
             await checkLockerStatus();
             throw error;
         }
-    };
+    }, [getHeaders, checkLockerStatus]);
 
-    const setupLocker = async (pin: string): Promise<boolean> => {
+    const setupLocker = useCallback(async (pin: string): Promise<boolean> => {
         try {
             const res = await fetch("/api/locker/setup", {
                 method: "POST",
@@ -311,9 +311,9 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         } catch (error: any) {
             throw error;
         }
-    };
+    }, [getHeaders, checkLockerStatus]);
 
-    const lockLocker = async () => {
+    const lockLocker = useCallback(async () => {
         try {
             await fetch("/api/locker/lock", {
                 method: "POST",
@@ -324,29 +324,50 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         } catch (error) {
             console.error("Lock failed:", error);
         }
-    };
+    }, [getHeaders, checkLockerStatus]);
+
+    const contextValue = useMemo(() => ({
+        files,
+        favorites,
+        lockedFiles,
+        addFile,
+        toggleFavorite,
+        deleteFile,
+        isLockerUnlocked,
+        hasLocker,
+        isLockerLockedOut,
+        lockedUntil,
+        checkLockerStatus,
+        unlockLocker,
+        setupLocker,
+        lockLocker,
+        refreshFiles: fetchDocuments,
+        userProfile,
+        fetchUserProfile,
+        updateUserProfile,
+    }), [
+        files,
+        favorites,
+        lockedFiles,
+        addFile,
+        toggleFavorite,
+        deleteFile,
+        isLockerUnlocked,
+        hasLocker,
+        isLockerLockedOut,
+        lockedUntil,
+        checkLockerStatus,
+        unlockLocker,
+        setupLocker,
+        lockLocker,
+        fetchDocuments,
+        userProfile,
+        fetchUserProfile,
+        updateUserProfile,
+    ]);
 
     return (
-        <DashboardContext.Provider value={{
-            files,
-            favorites,
-            lockedFiles,
-            addFile,
-            toggleFavorite,
-            deleteFile,
-            isLockerUnlocked,
-            hasLocker,
-            isLockerLockedOut,
-            lockedUntil,
-            checkLockerStatus,
-            unlockLocker,
-            setupLocker,
-            lockLocker,
-            refreshFiles: fetchDocuments,
-            userProfile,
-            fetchUserProfile,
-            updateUserProfile,
-        }}>
+        <DashboardContext.Provider value={contextValue}>
             {children}
         </DashboardContext.Provider>
     );

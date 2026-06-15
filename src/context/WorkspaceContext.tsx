@@ -9,7 +9,7 @@ interface WorkspaceContextType {
   workspaces: WorkspaceListItem[];
   activeWorkspace: WorkspaceListItem | null;
   isLoading: boolean;
-  switchWorkspace: (workspaceId: string) => void;
+  switchWorkspace: (workspaceId: string, customTarget?: WorkspaceListItem) => void;
   refreshWorkspaces: () => Promise<void>;
 }
 
@@ -36,6 +36,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [workspaces, setWorkspaces] = useState<WorkspaceListItem[]>([]);
   const [activeWorkspace, setActiveWorkspace] = useState<WorkspaceListItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasFetched, setHasFetched] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -57,7 +58,12 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
           setCookie("workspace_id", active.id);
         }
 
-        setActiveWorkspace(active || null);
+        // Only update state if activeWorkspace has changed to prevent infinite loops
+        setActiveWorkspace((prev) => {
+          if (!active) return null;
+          if (prev && prev.id === active.id) return prev; // preserve reference
+          return active;
+        });
       }
     } catch (error) {
       console.error("Failed to fetch workspaces:", error);
@@ -72,14 +78,18 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     const isOnPublicRoute = publicRoutes.some((route) => pathname?.startsWith(route));
 
     if (!isOnPublicRoute && pathname !== "/onboarding") {
-      fetchWorkspaces();
+      if (!hasFetched) {
+        fetchWorkspaces();
+        setHasFetched(true);
+      }
     } else {
       setIsLoading(false);
+      setHasFetched(false); // Reset when navigating to public/onboarding routes
     }
-  }, [pathname]);
+  }, [pathname, hasFetched]);
 
-  const switchWorkspace = (workspaceId: string) => {
-    const target = workspaces.find((w) => w.id === workspaceId);
+  const switchWorkspace = (workspaceId: string, customTarget?: WorkspaceListItem) => {
+    const target = customTarget || workspaces.find((w) => w.id === workspaceId);
     if (!target) {
       toast.error("Selected workspace not found");
       return;

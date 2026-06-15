@@ -34,6 +34,9 @@ export async function createOrganisation(
     });
 
     return org;
+  }, {
+    maxWait: 15000, // Wait up to 15 seconds to acquire a connection from the pool
+    timeout: 30000  // Allow up to 30 seconds for transaction execution
   });
 }
 
