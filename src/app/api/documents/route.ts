@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireWorkspace, handleWorkspaceError } from '@backend/middleware/workspace';
-import { getDocuments, createDocument } from '@backend/services/document.service';
+import { getDocuments, createDocument, deleteDocument } from '@backend/services/document.service';
 
 //GET /api/documents 
 export async function GET(request: NextRequest) {
@@ -43,6 +43,31 @@ export async function POST(request: NextRequest) {
       { success: true, message: 'Document created successfully', data: { document } },
       { status: 201 }
     );
+  } catch (error: unknown) {
+    return handleWorkspaceError(error);
+  }
+}
+
+// DELETE /api/documents
+export async function DELETE(request: NextRequest) {
+  try {
+    const workspaceContext = await requireWorkspace(request);
+    const { searchParams } = new URL(request.url);
+    const documentId = searchParams.get('id');
+
+    if (!documentId) {
+      return NextResponse.json(
+        { success: false, message: 'Document ID is required' },
+        { status: 400 }
+      );
+    }
+
+    await deleteDocument(workspaceContext, documentId);
+
+    return NextResponse.json({
+      success: true,
+      message: 'Document deleted successfully',
+    });
   } catch (error: unknown) {
     return handleWorkspaceError(error);
   }

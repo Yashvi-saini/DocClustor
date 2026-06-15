@@ -9,6 +9,9 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDashboard } from "../../dashboard/context/DashboardContext";
+import { PinDots } from "./PinDots";
+import { Keypad } from "./Keypad";
+import { PinPanel } from "./PinPanel";
 import toast from "react-hot-toast";
 import { format } from "date-fns";
 
@@ -27,58 +30,7 @@ function FileBadge({ type }: { type: string }) {
     return <div className={`p-2 ${bg} rounded-md`}><Icon size={20} className={text} /></div>;
 }
 
-// ── PIN dots row
-function PinDots({ pin }: { pin: string }) {
-    return (
-        <div className="flex gap-3 justify-center my-2">
-            {[0, 1, 2, 3].map((i) => (
-                <motion.div
-                    key={i}
-                    animate={pin[i] ? { scale: [1, 1.2, 1] } : {}}
-                    transition={{ duration: 0.15 }}
-                    className={`w-14 h-14 rounded-md border-2 flex items-center justify-center text-2xl font-bold transition-all duration-200 ${
-                        pin[i]
-                            ? "border-[#018FFF] bg-[#018FFF] text-white shadow-lg shadow-[#018FFF]/25"
-                            : "border-gray-200 bg-white text-transparent"
-                    }`}
-                >
-                    {pin[i] ? "●" : ""}
-                </motion.div>
-            ))}
-        </div>
-    );
-}
 
-// ── Keypad
-function Keypad({ onPress, onDelete }: { onPress: (n: string) => void; onDelete: () => void }) {
-    const rows = [["1","2","3"],["4","5","6"],["7","8","9"],["","0","⌫"]];
-    return (
-        <div className="space-y-2 w-full max-w-[220px] mx-auto">
-            {rows.map((row, ri) => (
-                <div key={ri} className="grid grid-cols-3 gap-2">
-                    {row.map((k, ki) => {
-                        if (k === "") return <div key={ki} />;
-                        const isDel = k === "⌫";
-                        return (
-                            <motion.button
-                                key={ki}
-                                whileTap={{ scale: 0.91 }}
-                                onClick={() => isDel ? onDelete() : onPress(k)}
-                                className={`h-12 rounded-md text-sm font-bold border transition-colors shadow-sm ${
-                                    isDel
-                                        ? "border-red-100 bg-red-50 text-red-400 hover:bg-red-100"
-                                        : "border-gray-100 bg-gray-50 text-[#003259] hover:bg-[#E0F2FE] hover:border-[#018FFF]/30"
-                                }`}
-                            >
-                                {isDel ? <Delete size={15} className="mx-auto" /> : k}
-                            </motion.button>
-                        );
-                    })}
-                </div>
-            ))}
-        </div>
-    );
-}
 
 // ── Left branding panel for PIN screens
 function LockerBrand({ isSetup }: { isSetup?: boolean }) {
@@ -124,7 +76,18 @@ function LockerBrand({ isSetup }: { isSetup?: boolean }) {
 
 // ═══════════════════════════════════════════════════
 export function LockerUI() {
-    const { addFile, lockedFiles, deleteFile } = useDashboard();
+    const { 
+        addFile, 
+        lockedFiles, 
+        deleteFile,
+        isLockerUnlocked,
+        hasLocker,
+        isLockerLockedOut,
+        lockedUntil,
+        unlockLocker,
+        setupLocker,
+        lockLocker
+    } = useDashboard();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     type View = "setup" | "confirm" | "enter" | "vault";
@@ -134,24 +97,51 @@ export function LockerUI() {
     const [newPin,     setNewPin]     = useState("");
     const [confirmPin, setConfirmPin] = useState("");
     const [enterPin,   setEnterPin]   = useState("");
-    const [savedPin,   setSavedPin]   = useState<string | null>(null);
 
     const [pinError,      setPinError]      = useState("");
     const [mismatchError, setMismatchError] = useState(false);
 
     useEffect(() => {
-        const stored = localStorage.getItem(PIN_KEY);
-        setSavedPin(stored);
-        setView(stored ? "enter" : "setup");
+        if (!hasLocker) {
+            setView("setup");
+        } else if (isLockerUnlocked) {
+            setView("vault");
+        } else {
+            setView("enter");
+        }
         setMounted(true);
-    }, []);
+    }, [hasLocker, isLockerUnlocked]);
+
+    // Update lockout warning message
+    useEffect(() => {
+        if (isLockerLockedOut && lockedUntil) {
+            const updateLockoutMsg = () => {
+                const now = new Date();
+                const diffMs = lockedUntil.getTime() - now.getTime();
+                if (diffMs > 0) {
+                    const diffMins = Math.ceil(diffMs / (1000 * 60));
+                    setPinError(`Locker is locked out. Try again in ${diffMins} minutes.`);
+                } else {
+                    setPinError("");
+                }
+            };
+            updateLockoutMsg();
+            const interval = setInterval(updateLockoutMsg, 30000);
+            return () => clearInterval(interval);
+        } else {
+            setPinError("");
+        }
+    }, [isLockerLockedOut, lockedUntil]);
 
     const triggerError = (msg: string, reset: () => void) => {
         setPinError(msg);
-        setTimeout(() => { setPinError(""); reset(); }, 1000);
+        setTimeout(() => { 
+            if (!isLockerLockedOut) setPinError(""); 
+            reset(); 
+        }, 2000);
     };
 
-    // handlers ─────────────────────────────────────
+    // handlers 
     const handleSetup = (n: string) => {
         if (newPin.length < 4) {
             const next = newPin + n;
@@ -165,19 +155,26 @@ export function LockerUI() {
             const next = confirmPin + n;
             setConfirmPin(next);
             if (next.length === 4) {
-                setTimeout(() => {
+                setTimeout(async () => {
                     if (next === newPin) {
-                        localStorage.setItem(PIN_KEY, next);
-                        setSavedPin(next);
-                        toast.success("Locker PIN created! 🔐");
-                        setNewPin(""); setConfirmPin("");
-                        setView("vault");
+                        try {
+                            await setupLocker(next);
+                            toast.success("Locker PIN created! 🔐");
+                            setNewPin(""); 
+                            setConfirmPin("");
+                        } catch (err: any) {
+                            toast.error(err.message || "Failed to set up PIN");
+                            setConfirmPin("");
+                            setNewPin("");
+                            setView("setup");
+                        }
                     } else {
                         setMismatchError(true);
                         toast.error("PINs don't match");
                         setTimeout(() => {
                             setMismatchError(false);
-                            setConfirmPin(""); setNewPin("");
+                            setConfirmPin(""); 
+                            setNewPin("");
                             setView("setup");
                         }, 900);
                     }
@@ -191,14 +188,14 @@ export function LockerUI() {
             const next = enterPin + n;
             setEnterPin(next);
             if (next.length === 4) {
-                setTimeout(() => {
-                    if (next === savedPin) {
+                setTimeout(async () => {
+                    try {
+                        await unlockLocker(next);
                         toast.success("Access granted ✅");
                         setEnterPin("");
-                        setView("vault");
-                    } else {
-                        triggerError("Incorrect PIN – try again", () => setEnterPin(""));
-                        toast.error("Incorrect PIN");
+                    } catch (err: any) {
+                        triggerError(err.message || "Incorrect PIN – try again", () => setEnterPin(""));
+                        toast.error(err.message || "Incorrect PIN");
                     }
                 }, 300);
             }
@@ -209,46 +206,17 @@ export function LockerUI() {
         const file = e.target.files?.[0];
         if (file) {
             addFile(file, true);
-            toast.success(`"${file.name}" encrypted & saved`);
             if (fileInputRef.current) fileInputRef.current.value = "";
         }
     };
 
     const handleReset = () => {
-        localStorage.removeItem(PIN_KEY);
-        setSavedPin(null);
-        setEnterPin(""); setNewPin(""); setConfirmPin("");
-        setView("setup");
-        toast("PIN cleared — set a new one", { icon: "🔑" });
+        toast.error("Contact administration to reset your master key.", { icon: "🔒" });
     };
 
     if (!mounted) return null;
 
-    // ── shared PIN panel (right side) wrapper
-    const PinPanel = ({
-        title, subtitle, children, error, errorMsg,
-    }: {
-        title: string; subtitle: string;
-        children: React.ReactNode;
-        error?: boolean; errorMsg?: string;
-    }) => (
-        <div className={`flex-1 w-1/2 bg-white rounded-lg border shadow-sm p-7 flex flex-col gap-5 transition-all ${error ? "border-red-300 shadow-red-100" : "border-gray-100"}`}>
-            <div>
-                <h3 className="text-xl font-bold text-[#003259] mb-1">{title}</h3>
-                <p className="text-sm text-gray-400">{subtitle}</p>
-            </div>
-            {children}
-            {error && errorMsg && (
-                <motion.div
-                    initial={{ opacity: 0, y: -6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-500 text-sm font-semibold px-4 py-2.5 rounded-md"
-                >
-                    <AlertCircle size={15} /> {errorMsg}
-                </motion.div>
-            )}
-        </div>
-    );
+
 
     return (
         <div className="w-full space-y-6">
@@ -267,7 +235,7 @@ export function LockerUI() {
                 </div>
                 {view === "vault" && (
                     <button
-                        onClick={() => { setEnterPin(""); setView("enter"); }}
+                        onClick={() => { lockLocker(); }}
                         className="flex items-center gap-2 px-4 py-2 rounded-md border border-gray-200 text-sm font-bold text-gray-500 hover:border-[#018FFF] hover:text-[#018FFF] transition-all"
                     >
                         <Lock size={14} /> Lock Vault

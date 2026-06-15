@@ -4,23 +4,44 @@ import React from "react";
 import { FileText, Lock, Eye, Download, FileSpreadsheet, File as FileIcon, List, LayoutGrid, Star, Trash2, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDashboard, FileItem } from "../context/DashboardContext";
+import { LockerPinModal } from "../../locker/components/LockerPinModal";
 import toast from "react-hot-toast";
 
 export function RecentFilesSection() {
-    const { files, toggleFavorite, deleteFile } = useDashboard();
+    const { files, toggleFavorite, deleteFile, isLockerUnlocked } = useDashboard();
+    const [pinModalOpen, setPinModalOpen] = React.useState(false);
+    const [pendingAction, setPendingAction] = React.useState<{ file: FileItem; type: 'preview' | 'download' } | null>(null);
+
+    const executeAction = (file: FileItem, type: 'preview' | 'download') => {
+        if (type === 'preview') {
+            window.open(file.url, '_blank');
+        } else {
+            const link = document.createElement('a');
+            link.href = file.url;
+            link.download = file.name;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            toast.success("Download started");
+        }
+    };
 
     const handleDownload = (file: FileItem) => {
-        const link = document.createElement('a');
-        link.href = file.url;
-        link.download = file.name;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success("Download started");
+        if (file.isLocked && !isLockerUnlocked) {
+            setPendingAction({ file, type: 'download' });
+            setPinModalOpen(true);
+        } else {
+            executeAction(file, 'download');
+        }
     };
 
     const handlePreview = (file: FileItem) => {
-        window.open(file.url, '_blank');
+        if (file.isLocked && !isLockerUnlocked) {
+            setPendingAction({ file, type: 'preview' });
+            setPinModalOpen(true);
+        } else {
+            executeAction(file, 'preview');
+        }
     };
 
     const getFileIcon = (type: string) => {
@@ -161,6 +182,19 @@ export function RecentFilesSection() {
                     </div>
                 </div>
             )}
+
+            <LockerPinModal 
+                isOpen={pinModalOpen}
+                onClose={() => {
+                    setPinModalOpen(false);
+                    setPendingAction(null);
+                }}
+                onSuccess={() => {
+                    if (pendingAction) {
+                        executeAction(pendingAction.file, pendingAction.type);
+                    }
+                }}
+            />
         </div>
     );
 }

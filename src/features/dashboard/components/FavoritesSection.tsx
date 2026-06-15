@@ -1,15 +1,26 @@
 "use client";
 
-import React from "react";
-import { Plus, File as FileIcon } from "lucide-react";
-import { useDashboard } from "../context/DashboardContext";
+import React, { useState } from "react";
+import { Plus, File as FileIcon, Lock } from "lucide-react";
+import { useDashboard, FileItem } from "../context/DashboardContext";
+import { LockerPinModal } from "../../locker/components/LockerPinModal";
 
 export function FavoritesSection() {
-    const { favorites } = useDashboard();
+    const { favorites, isLockerUnlocked } = useDashboard();
+    const [pinModalOpen, setPinModalOpen] = useState(false);
+    const [pendingFile, setPendingFile] = useState<FileItem | null>(null);
 
-   
     const maxSlots = 9;
     const slots = Array(maxSlots).fill(null);
+
+    const handleFileClick = (file: FileItem) => {
+        if (file.isLocked && !isLockerUnlocked) {
+            setPendingFile(file);
+            setPinModalOpen(true);
+        } else {
+            window.open(file.url, '_blank');
+        }
+    };
 
     return (
         <div className="w-full bg-[#1E9BFF] rounded-2xl p-6 mb-6 shadow-md transition-all">
@@ -23,8 +34,8 @@ export function FavoritesSection() {
                         return (
                             <div
                                 key={file.id}
-                                onClick={() => window.open(file.url, '_blank')}
-                                className="w-20 h-20 sm:w-24 sm:h-24 bg-white rounded-2xl flex flex-col items-center justify-center hover:bg-gray-100 transition-colors cursor-pointer shadow-sm p-2 gap-1 text-center"
+                                onClick={() => handleFileClick(file)}
+                                className="w-20 h-20 sm:w-24 sm:h-24 bg-white rounded-2xl flex flex-col items-center justify-center hover:bg-gray-100 transition-colors cursor-pointer shadow-sm p-2 gap-1 text-center relative"
                                 title={file.name}
                             >
                                 <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-500">
@@ -33,6 +44,11 @@ export function FavoritesSection() {
                                 <span className="text-[10px] text-gray-700 font-semibold truncate w-full px-1">
                                     {file.name}
                                 </span>
+                                {file.isLocked && (
+                                    <div className="absolute top-1 right-1 w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center text-white p-0.5" title="Locked Document">
+                                        <Lock size={8} />
+                                    </div>
+                                )}
                             </div>
                         );
                     }
@@ -49,6 +65,19 @@ export function FavoritesSection() {
                     );
                 })}
             </div>
+
+            <LockerPinModal 
+                isOpen={pinModalOpen}
+                onClose={() => {
+                    setPinModalOpen(false);
+                    setPendingFile(null);
+                }}
+                onSuccess={() => {
+                    if (pendingFile) {
+                        window.open(pendingFile.url, '_blank');
+                    }
+                }}
+            />
         </div>
     );
 }
