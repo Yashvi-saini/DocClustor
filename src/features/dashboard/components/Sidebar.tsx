@@ -3,11 +3,13 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Plus, ChevronDown, Check } from "lucide-react";
+import { Plus, ChevronDown, Check, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useWorkspace } from "@/context/WorkspaceContext";
+import { authService } from "@/services/auth.service";
+import toast from "react-hot-toast";
 
 interface SidebarItem {
   label: string;
@@ -26,6 +28,7 @@ const getSidebarItems = (basePath: string): SidebarItem[] => [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [showWorkspaceDropdown, setShowWorkspaceDropdown] = useState(false);
 
@@ -33,6 +36,18 @@ export function Sidebar() {
 
   const basePath = activeWorkspace?.type === "org" ? "/company" : "/individual";
   const sidebarItems = getSidebarItems(basePath);
+
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+      toast.success("Logged out successfully");
+      router.refresh();
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout failed", error);
+      toast.error("Logout failed. Please try again.");
+    }
+  };
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
@@ -219,7 +234,7 @@ export function Sidebar() {
         </div>
       </nav>
 
-      <div className="p-4 border-t border-white/10 shrink-0">
+      <div className="p-4 border-t border-white/10 shrink-0 space-y-2">
         <Button
           className={cn(
             "w-full bg-[#1E9BFF] hover:bg-[#1E9BFF]/85 text-white font-bold transition-all shadow-lg shadow-blue-500/20",
@@ -227,6 +242,18 @@ export function Sidebar() {
           )}
         >
           {isCollapsed ? <Plus size={24} /> : <><Plus size={20} /> Upload Doc</>}
+        </Button>
+
+        <Button
+          onClick={handleLogout}
+          variant="ghost"
+          className={cn(
+            "w-full text-white/70 hover:text-white hover:bg-white/10 font-semibold transition-all h-10",
+            isCollapsed ? "px-0 justify-center" : "justify-start gap-3"
+          )}
+        >
+          <LogOut size={20} className="shrink-0" />
+          {!isCollapsed && <span>Logout</span>}
         </Button>
       </div>
     </aside>
