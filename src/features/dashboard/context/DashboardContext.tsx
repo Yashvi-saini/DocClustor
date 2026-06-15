@@ -16,6 +16,16 @@ export interface FileItem {
     content?: string;
 }
 
+export interface UserProfile {
+    name: string;
+    email: string;
+    avatar?: string;
+    phone?: string;
+    dob?: string;
+    role?: string;
+    joinedDate?: string;
+}
+
 interface DashboardContextType {
     files: FileItem[];
     favorites: FileItem[];
@@ -34,6 +44,11 @@ interface DashboardContextType {
     setupLocker: (pin: string) => Promise<boolean>;
     lockLocker: () => Promise<void>;
     refreshFiles: () => Promise<void>;
+
+    // User profile states & methods
+    userProfile: UserProfile | null;
+    fetchUserProfile: () => Promise<void>;
+    updateUserProfile: (data: Partial<UserProfile>) => Promise<boolean>;
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
@@ -47,6 +62,9 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     const [hasLocker, setHasLocker] = useState(false);
     const [isLockerLockedOut, setIsLockerLockedOut] = useState(false);
     const [lockedUntil, setLockedUntil] = useState<Date | null>(null);
+
+    // User profile state
+    const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
     const getHeaders = () => {
         const headers: HeadersInit = {
@@ -106,10 +124,58 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const fetchUserProfile = async () => {
+        try {
+            const res = await fetch("/api/users/me");
+            const json = await res.json();
+            if (json.success && json.data?.user) {
+                const u = json.data.user;
+                setUserProfile({
+                    name: u.name || "User",
+                    email: u.email || "",
+                    avatar: u.avatar || "",
+                    phone: u.phone || "",
+                    dob: u.dob || "",
+                    role: u.role || "Individual Creator",
+                    joinedDate: u.createdAt ? new Date(u.createdAt).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "April 2024",
+                });
+            }
+        } catch (error) {
+            console.error("Failed to fetch user profile:", error);
+        }
+    };
+
+    const updateUserProfile = async (data: Partial<UserProfile>): Promise<boolean> => {
+        try {
+            const res = await fetch("/api/users/me", {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+            });
+            const json = await res.json();
+            if (json.success) {
+                toast.success("Profile updated successfully");
+                await fetchUserProfile();
+                return true;
+            } else {
+                throw new Error(json.message || "Failed to update profile");
+            }
+        } catch (error: any) {
+            toast.error(error.message || "Update failed");
+            return false;
+        }
+    };
+
     useEffect(() => {
         fetchDocuments();
         checkLockerStatus();
     }, [activeWorkspace]);
+
+    useEffect(() => {
+        fetchUserProfile();
+    }, []);
 
     const favorites = files.filter((file) => file.isFavorite);
     const lockedFiles = files.filter((file) => file.isLocked);
@@ -276,7 +342,10 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
             unlockLocker,
             setupLocker,
             lockLocker,
-            refreshFiles: fetchDocuments
+            refreshFiles: fetchDocuments,
+            userProfile,
+            fetchUserProfile,
+            updateUserProfile,
         }}>
             {children}
         </DashboardContext.Provider>
