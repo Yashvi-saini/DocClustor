@@ -33,7 +33,7 @@ export function DocumentsView({
     title = "Documents", 
     description = "Manage, organize, and access all your files." 
 }: DocumentsViewProps) {
-    const { files, deleteFile, addFile } = useDashboard();
+    const { files, deleteFile, addFile, getFileBlobUrl } = useDashboard();
     
     const [viewMode, setViewMode] = useState<ViewMode>("list");
     const [searchQuery, setSearchQuery] = useState("");
@@ -56,23 +56,32 @@ export function DocumentsView({
         const file = e.target.files?.[0];
         if (file) {
             addFile(file, false);
-            toast.success(`"${file.name}" uploaded successfully`);
             if (fileInputRef.current) fileInputRef.current.value = "";
         }
     };
 
-    const handleDownload = (file: FileItem) => {
-        const link = document.createElement('a');
-        link.href = file.url;
-        link.download = file.name;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success("Download started");
+    const handleDownload = async (file: FileItem) => {
+        try {
+            const url = await getFileBlobUrl(file);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = file.name;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            toast.success("Download started");
+        } catch (e) {
+            console.error(e);
+        }
     };
 
-    const handlePreview = (file: FileItem) => {
-        window.open(file.url, '_blank');
+    const handlePreview = async (file: FileItem) => {
+        try {
+            const url = await getFileBlobUrl(file);
+            window.open(url, '_blank');
+        } catch (e) {
+            console.error(e);
+        }
     };
 
     const filterOptions: FilterType[] = ["All files", "PDF", "Word", "Excel", "Image"];

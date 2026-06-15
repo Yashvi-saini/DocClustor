@@ -6,19 +6,24 @@ import { useDashboard, FileItem } from "../context/DashboardContext";
 import { LockerPinModal } from "../../locker/components/LockerPinModal";
 
 export function FavoritesSection() {
-    const { favorites, isLockerUnlocked } = useDashboard();
+    const { favorites, isLockerUnlocked, getFileBlobUrl } = useDashboard();
     const [pinModalOpen, setPinModalOpen] = useState(false);
     const [pendingFile, setPendingFile] = useState<FileItem | null>(null);
 
     const maxSlots = 9;
     const slots = Array(maxSlots).fill(null);
 
-    const handleFileClick = (file: FileItem) => {
+    const handleFileClick = async (file: FileItem) => {
         if (file.isLocked && !isLockerUnlocked) {
             setPendingFile(file);
             setPinModalOpen(true);
         } else {
-            window.open(file.url, '_blank');
+            try {
+                const url = await getFileBlobUrl(file);
+                window.open(url, '_blank');
+            } catch (e) {
+                console.error(e);
+            }
         }
     };
 
@@ -72,9 +77,14 @@ export function FavoritesSection() {
                     setPinModalOpen(false);
                     setPendingFile(null);
                 }}
-                onSuccess={() => {
+                onSuccess={async () => {
                     if (pendingFile) {
-                        window.open(pendingFile.url, '_blank');
+                        try {
+                            const url = await getFileBlobUrl(pendingFile);
+                            window.open(url, '_blank');
+                        } catch (e) {
+                            console.error(e);
+                        }
                     }
                 }}
             />

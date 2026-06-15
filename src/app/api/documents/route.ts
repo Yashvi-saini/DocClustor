@@ -9,10 +9,27 @@ export async function GET(request: NextRequest) {
     const workspaceContext = await requireWorkspace(request);
     const documents = await getDocuments(workspaceContext);
 
+    const workspaceId = workspaceContext.type === 'personal'
+      ? workspaceContext.userId
+      : workspaceContext.orgId;
+    const cookieName = `locker_session_${workspaceId}`;
+    const isSessionUnlocked = request.cookies.get(cookieName)?.value === 'unlocked';
+
+    const securedDocuments = documents.map(doc => {
+      if (doc.lockerId !== null && !isSessionUnlocked) {
+        return {
+          ...doc,
+          content: "[LOCKED]",
+          fileUrl: null,
+        };
+      }
+      return doc;
+    });
+
     return NextResponse.json({
       success: true,
       message: 'Documents fetched successfully',
-      data: { documents },
+      data: { documents: securedDocuments },
     });
   } catch (error: unknown) {
     return handleWorkspaceError(error);
@@ -37,6 +54,8 @@ export async function POST(request: NextRequest) {
       content: body.content,
       type: body.type || 'TEXT',
       visibility: body.visibility, // SHARED | PRIVATE | ADMIN_ONLY
+      fileSize: body.fileSize,
+      mimeType: body.mimeType,
     });
 
     return NextResponse.json(

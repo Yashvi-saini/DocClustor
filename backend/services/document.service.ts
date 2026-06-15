@@ -2,13 +2,34 @@ import { prisma } from '../db/prisma';
 import { DocumentUploadPayload, WorkspaceContext } from '../types/api.types';
 import { OrgRole, DocVisibility } from '@prisma/client';
 
-export async function getDocuments(workspaceContext: WorkspaceContext) {
+export async function getDocuments(workspaceContext: WorkspaceContext, includeContent = false) {
+  const selectFields = {
+    id: true,
+    title: true,
+    type: true,
+    isEncrypted: true,
+    vectorId: true,
+    source: true,
+    fileUrl: true,
+    fileSize: true,
+    mimeType: true,
+    userId: true,
+    orgId: true,
+    lockerId: true,
+    uploadedById: true,
+    visibility: true,
+    createdAt: true,
+    updatedAt: true,
+    ...(includeContent ? { content: true } : {}),
+  };
+
   if (workspaceContext.type === 'personal') {
     return prisma.document.findMany({
       where: {
         userId: workspaceContext.userId,
         orgId: null,
       },
+      select: selectFields,
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -37,6 +58,7 @@ export async function getDocuments(workspaceContext: WorkspaceContext) {
       userId: null,
       OR: visibilityConditions,
     },
+    select: selectFields,
     orderBy: { createdAt: 'desc' },
   });
 }

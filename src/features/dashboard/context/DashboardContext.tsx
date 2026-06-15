@@ -28,11 +28,13 @@ export interface UserProfile {
 
 interface DashboardContextType {
     files: FileItem[];
+    isLoadingFiles: boolean;
     favorites: FileItem[];
     lockedFiles: FileItem[];
     addFile: (file: File, isLocked?: boolean) => Promise<void>;
     toggleFavorite: (id: string) => void;
     deleteFile: (id: string) => Promise<void>;
+    getFileBlobUrl: (file: FileItem) => Promise<string>;
     
     // Locker states & methods
     isLockerUnlocked: boolean;
@@ -55,6 +57,7 @@ const DashboardContext = createContext<DashboardContextType | undefined>(undefin
 
 export function DashboardProvider({ children }: { children: ReactNode }) {
     const [files, setFiles] = useState<FileItem[]>([]);
+    const [isLoadingFiles, setIsLoadingFiles] = useState(true);
     const { activeWorkspace } = useWorkspace();
 
     // Locker state variables
@@ -77,7 +80,11 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     }, [activeWorkspace]);
 
     const fetchDocuments = useCallback(async () => {
-        if (!activeWorkspace) return;
+        if (!activeWorkspace) {
+            setIsLoadingFiles(false);
+            return;
+        }
+        setIsLoadingFiles(true);
         try {
             const res = await fetch("/api/documents", {
                 headers: getHeaders(),
@@ -89,18 +96,69 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
                     name: doc.title,
                     type: doc.type,
                     size: doc.fileSize ? formatFileSize(Number(doc.fileSize)) : "0 Bytes",
-                    url: doc.fileUrl || `data:text/plain;base64,${btoa(unescape(encodeURIComponent(doc.content || "")))},urlType`,
+                    url: doc.fileUrl || "",
                     createdAt: new Date(doc.createdAt),
                     isFavorite: localStorage.getItem(`fav_${doc.id}`) === "true",
                     isLocked: doc.lockerId !== null,
-                    content: doc.content,
                 }));
                 setFiles(mapped);
             }
         } catch (error) {
             console.error("Failed to fetch documents:", error);
+        } finally {
+            setIsLoadingFiles(false);
         }
     }, [activeWorkspace, getHeaders]);
+
+    const fetchFileContent = useCallback(async (fileId: string) => {
+        try {
+            const res = await fetch(`/api/documents/${fileId}`, {
+                headers: getHeaders(),
+            });
+            const json = await res.json();
+            if (json.success && json.data?.content) {
+                return json.data.content;
+            }
+            throw new Error(json.message || "Failed to load file content");
+        } catch (error: any) {
+            console.error("fetchFileContent failed:", error);
+            throw error;
+        }
+    }, [getHeaders]);
+
+    const getFileBlobUrl = useCallback(async (file: FileItem) => {
+        if (file.url) return file.url;
+
+        const toastId = toast.loading(`Loading content for "${file.name}"...`);
+        try {
+            const content = await fetchFileContent(file.id);
+            let blobUrl = "";
+
+            if (content.startsWith("data:")) {
+                const arr = content.split(',');
+                const mimeMatch = arr[0].match(/:(.*?);/);
+                const mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
+                const bstr = atob(arr[1]);
+                let n = bstr.length;
+                const u8arr = new Uint8Array(n);
+                while (n--) {
+                    u8arr[n] = bstr.charCodeAt(n);
+                }
+                const blob = new Blob([u8arr], { type: mime });
+                blobUrl = URL.createObjectURL(blob);
+            } else {
+                const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+                blobUrl = URL.createObjectURL(blob);
+            }
+
+            setFiles(prev => prev.map(f => f.id === file.id ? { ...f, url: blobUrl } : f));
+            toast.dismiss(toastId);
+            return blobUrl;
+        } catch (error: any) {
+            toast.error(error.message || "Failed to load content", { id: toastId });
+            throw error;
+        }
+    }, [fetchFileContent]);
 
     const checkLockerStatus = useCallback(async () => {
         if (!activeWorkspace) return;
@@ -186,6 +244,13 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
             return;
         }
 
+        const MAX_SIZE = 3.5 * 1024 * 1024;
+        if (file.size > MAX_SIZE) {
+            toast.error(`"${file.name}" is too large. Maximum upload size is 3.5 MB.`);
+            return;
+        }
+
+        const toastId = toast.loading(`Uploading "${file.name}"...`);
         const reader = new FileReader();
         const isText = file.type.startsWith("text/") || file.name.endsWith(".txt") || file.name.endsWith(".md");
 
@@ -201,6 +266,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
                         content: fileContent || " ",
                         type: getFileType(file.name),
                         visibility: "SHARED",
+                        fileSize: file.size,
+                        mimeType: file.type,
                     }),
                 });
 
@@ -212,6 +279,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
                 const newDoc = json.data.document;
 
                 if (isLocked) {
+                    toast.loading(`Encrypting and locking "${file.name}"...`, { id: toastId });
                     const lockRes = await fetch("/api/locker/documents", {
                         method: "POST",
                         headers: getHeaders(),
@@ -225,11 +293,11 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
                     }
                 }
 
-                toast.success(isLocked ? `"${file.name}" encrypted & saved` : `Uploaded ${file.name}`);
+                toast.success(isLocked ? `"${file.name}" encrypted & saved` : `Uploaded ${file.name}`, { id: toastId });
                 await fetchDocuments();
             } catch (error: any) {
                 console.error("Upload failed:", error);
-                toast.error(error.message || "Upload failed");
+                toast.error(error.message || "Upload failed", { id: toastId });
             }
         };
 
@@ -328,11 +396,13 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
     const contextValue = useMemo(() => ({
         files,
+        isLoadingFiles,
         favorites,
         lockedFiles,
         addFile,
         toggleFavorite,
         deleteFile,
+        getFileBlobUrl,
         isLockerUnlocked,
         hasLocker,
         isLockerLockedOut,
@@ -347,11 +417,13 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         updateUserProfile,
     }), [
         files,
+        isLoadingFiles,
         favorites,
         lockedFiles,
         addFile,
         toggleFavorite,
         deleteFile,
+        getFileBlobUrl,
         isLockerUnlocked,
         hasLocker,
         isLockerLockedOut,
@@ -384,10 +456,9 @@ export function useDashboard() {
 function getFileType(filename: string): string {
     const ext = filename.split(".").pop()?.toLowerCase();
     if (ext === "pdf") return "PDF";
-    if (["doc", "docx"].includes(ext || "")) return "Word";
-    if (["xls", "xlsx"].includes(ext || "")) return "Excel";
-    if (["jpg", "jpeg", "png", "gif"].includes(ext || "")) return "Image";
-    return "File";
+    if (["doc", "docx"].includes(ext || "")) return "DOCX";
+    if (["jpg", "jpeg", "png", "gif"].includes(ext || "")) return "IMAGE";
+    return "TEXT";
 }
 
 function formatFileSize(bytes: number): string {

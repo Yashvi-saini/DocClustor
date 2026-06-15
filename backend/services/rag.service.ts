@@ -14,7 +14,7 @@ export interface RagQueryOutput {
 export async function queryRag(input: RagQueryInput): Promise<RagQueryOutput> {
   const { question, workspaceContext } = input;
 
-  const authorizedDocs = await getDocuments(workspaceContext);
+  const authorizedDocs = await getDocuments(workspaceContext, true);
 
   if (authorizedDocs.length === 0) {
     return {

@@ -8,21 +8,26 @@ import { LockerPinModal } from "../../locker/components/LockerPinModal";
 import toast from "react-hot-toast";
 
 export function RecentFilesSection() {
-    const { files, toggleFavorite, deleteFile, isLockerUnlocked } = useDashboard();
+    const { files, isLoadingFiles, toggleFavorite, deleteFile, isLockerUnlocked, getFileBlobUrl } = useDashboard();
     const [pinModalOpen, setPinModalOpen] = React.useState(false);
     const [pendingAction, setPendingAction] = React.useState<{ file: FileItem; type: 'preview' | 'download' } | null>(null);
 
-    const executeAction = (file: FileItem, type: 'preview' | 'download') => {
-        if (type === 'preview') {
-            window.open(file.url, '_blank');
-        } else {
-            const link = document.createElement('a');
-            link.href = file.url;
-            link.download = file.name;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            toast.success("Download started");
+    const executeAction = async (file: FileItem, type: 'preview' | 'download') => {
+        try {
+            const url = await getFileBlobUrl(file);
+            if (type === 'preview') {
+                window.open(url, '_blank');
+            } else {
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = file.name;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                toast.success("Download started");
+            }
+        } catch (e) {
+            console.error("Action execution failed:", e);
         }
     };
 
@@ -73,6 +78,44 @@ export function RecentFilesSection() {
         }
     }, [files.length, currentPage, totalPages]);
 
+
+    if (isLoadingFiles) {
+        return (
+            <div className="w-full">
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-bold font-poppins text-black">Recents</h2>
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-gray-100 rounded-lg animate-pulse" />
+                        <div className="w-8 h-8 bg-gray-100 rounded-lg animate-pulse" />
+                    </div>
+                </div>
+                <div className="space-y-3 pb-4">
+                    {[1, 2, 3].map((i) => (
+                        <div
+                            key={i}
+                            className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100 animate-pulse"
+                        >
+                            <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 bg-gray-100 rounded-lg" />
+                                <div className="flex flex-col gap-2">
+                                    <div className="h-4 w-32 sm:w-48 bg-gray-100 rounded" />
+                                    <div className="h-3 w-20 bg-gray-50 rounded" />
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 bg-gray-100 rounded-full" />
+                                <div className="hidden sm:flex items-center gap-2">
+                                    <div className="h-8 w-16 bg-gray-100 rounded-lg" />
+                                    <div className="h-8 w-24 bg-gray-100 rounded-lg" />
+                                </div>
+                                <div className="w-8 h-8 bg-gray-100 rounded-full" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
 
     if (files.length === 0) {
         return (

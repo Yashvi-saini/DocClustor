@@ -19,7 +19,6 @@ export function UploadSection() {
         const file = e.target.files?.[0];
         if (file) {
             addFile(file);
-            toast.success(`Uploaded ${file.name}`);
             // Reset input
             if (fileInputRef.current) {
                 fileInputRef.current.value = "";
@@ -54,7 +53,6 @@ export function UploadSection() {
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
             const file = e.dataTransfer.files[0];
             addFile(file);
-            toast.success(`Uploaded ${file.name}`);
         }
     };
 
