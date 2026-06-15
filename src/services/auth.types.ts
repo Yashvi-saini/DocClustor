@@ -50,7 +50,7 @@ export interface AuthUserResponse {
 export interface OAuthTokenResponse {
     success: boolean;
     data: {
-        user: AuthUserResponse;
+        user: AuthUser;
         tokens: {
             accessToken: string;
             refreshToken: string;
