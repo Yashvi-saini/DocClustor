@@ -11,6 +11,7 @@ import { BackgroundAnimation } from "@/components/ui/background-animation";
 import { AvatarSelectionStep } from "./components/AvatarSelectionStep";
 import { PersonalDetailsStep } from "./components/PersonalDetailsStep";
 import { PinSetupStep } from "./components/PinSetupStep";
+import toast from "react-hot-toast";
 
 const poppins = Poppins({
     subsets: ["latin"],
@@ -32,6 +33,7 @@ const TOTAL_STEPS = 3;
 export default function SetupWizard() {
     const router = useRouter();
     const [step, setStep] = useState(1);
+    const [loading, setLoading] = useState(false);
     const [data, setData] = useState<WizardData>({
         avatar: null,
         fullName: "",
@@ -45,13 +47,77 @@ export default function SetupWizard() {
         setData((prev) => ({ ...prev, ...newData }));
     };
 
-    const handleNext = () => {
-        if (step === TOTAL_STEPS) {
-            // Final Submit
-            console.log("Submitting:", data);
-            router.push("/individual/home");
+    const handleNext = async () => {
+        if (step === 1 && !data.avatar) {
+            toast.error("Please select an avatar picture.");
             return;
         }
+        if (step === 2) {
+            if (!data.fullName.trim()) {
+                toast.error("Name is required.");
+                return;
+            }
+            if (!data.phone.trim()) {
+                toast.error("Phone number is required.");
+                return;
+            }
+            if (!data.dob) {
+                toast.error("Date of birth is required.");
+                return;
+            }
+        }
+
+        if (step === TOTAL_STEPS) {
+            if (!data.pin || data.pin.length !== 6 || !/^\d+$/.test(data.pin)) {
+                toast.error("PIN must be exactly 6 digits.");
+                return;
+            }
+            if (data.pin !== data.confirmPin) {
+                toast.error("PINs do not match.");
+                return;
+            }
+
+            // Submit Onboarding to Backend API
+            setLoading(true);
+            try {
+                // Optional: Update name first if changed
+                if (data.fullName.trim()) {
+                    await fetch("/api/users/me", {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ name: data.fullName }),
+                    });
+                }
+
+                const res = await fetch("/api/profile/onboard", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        avatar: data.avatar,
+                        phone: data.phone,
+                        dob: data.dob,
+                        masterPin: data.pin,
+                    }),
+                });
+
+                const resData = await res.json();
+                if (!res.ok || !resData.success) {
+                    throw new Error(resData.message || "Onboarding failed");
+                }
+
+                toast.success("Profile setup complete!");
+                
+                // Refresh routing and redirect to dashboard
+                router.refresh();
+                router.push("/individual/home");
+            } catch (err: any) {
+                toast.error(err.message || "Failed to setup profile.");
+            } finally {
+                setLoading(false);
+            }
+            return;
+        }
+
         setStep((prev) => Math.min(prev + 1, TOTAL_STEPS));
     };
 
@@ -64,6 +130,7 @@ export default function SetupWizard() {
     };
 
     const getButtonText = () => {
+        if (loading) return "Setting up profile...";
         if (step === 1) return "Continue with the image";
         if (step === 2) return "Continue";
         if (step === 3) return "Complete Profile";
@@ -91,6 +158,7 @@ export default function SetupWizard() {
             <button
                 onClick={() => router.back()}
                 className="absolute top-6 left-6 z-20 text-[#018FFF] hover:bg-[#E6F4FF] p-2 rounded-full transition-colors"
+                disabled={loading}
             >
                 <ArrowLeft size={24} />
             </button>
@@ -104,6 +172,7 @@ export default function SetupWizard() {
                         <button
                             onClick={() => setStep(step - 1)}
                             className="absolute left-0 p-2 bg-[#F6F6F6] rounded-full hover:bg-gray-200 transition-colors"
+                            disabled={loading}
                         >
                             <ChevronLeft size={20} className="text-[#333]" />
                         </button>
@@ -119,6 +188,7 @@ export default function SetupWizard() {
                         <button
                             onClick={handleNext}
                             className="absolute right-0 p-2 bg-[#F6F6F6] rounded-full hover:bg-gray-200 transition-colors"
+                            disabled={loading}
                         >
                             <ChevronRight size={20} className="text-[#333]" />
                         </button>
@@ -133,12 +203,12 @@ export default function SetupWizard() {
                 {/* Content Area */}
                 <div className="flex-1 flex flex-col items-center justify-center w-full">
                     <motion.div
-                        key={step}
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
-                        transition={{ duration: 0.3 }}
-                        className="w-full"
+                      key={step}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.3 }}
+                      className="w-full"
                     >
                         {renderStepContent()}
                     </motion.div>
@@ -148,6 +218,7 @@ export default function SetupWizard() {
                 <div className="mt-8 w-full px-4 sm:px-10">
                     <Button
                         onClick={handleNext}
+                        disabled={loading}
                         className="w-full h-[50px] bg-[#0B76FF] text-white rounded-[8px] font-bold text-[16px] hover:bg-[#0663d6] shadow-lg shadow-[#0B76FF]/20"
                     >
                         {getButtonText()}

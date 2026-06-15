@@ -82,14 +82,20 @@ export async function middleware(request: NextRequest) {
   }
 
   // Case 3: Authenticated but profile is NOT complete
-  // They must complete onboarding and cannot browse the dashboard
-  if (decoded && !decoded.profileComplete && pathname.startsWith('/dashboard')) {
+  // They must complete onboarding and cannot browse the dashboard or workspaces
+  if (
+    decoded &&
+    !decoded.profileComplete &&
+    (pathname.startsWith('/dashboard') ||
+      pathname.startsWith('/individual') ||
+      pathname.startsWith('/company'))
+  ) {
     return NextResponse.redirect(new URL('/onboarding', request.url));
   }
 
   // Case 4: Authenticated, profile is complete, trying to go to onboarding
   if (decoded && decoded.profileComplete && pathname === '/onboarding') {
-    return NextResponse.redirect(new URL('/dashboard/home', request.url));
+    return NextResponse.redirect(new URL('/individual/home', request.url));
   }
 
   // Reset password flow gate
