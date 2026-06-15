@@ -1,6 +1,7 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 const dashboardTypes = [
     {
@@ -28,6 +29,35 @@ const dashboardTypes = [
 ];
 
 export default function DashboardTypeCard() {
+    const [profileComplete, setProfileComplete] = useState<boolean | null>(null);
+
+    useEffect(() => {
+        // Check profile status on mount
+        fetch("/api/users/me")
+            .then(res => res.json())
+            .then(data => {
+                if (data?.success && data?.data?.profileComplete) {
+                    setProfileComplete(true);
+                } else {
+                    setProfileComplete(false);
+                }
+            })
+            .catch(() => setProfileComplete(false));
+    }, []);
+
+    const handleCardClick = (title: string) => {
+        if (title === "Individual Dashboard") {
+            if (profileComplete) {
+                window.location.href = "/individual/home";
+            } else {
+                window.location.href = "/individual/setup";
+            }
+        }
+        if (title === "Company Dashboard") {
+            window.location.href = "/company/home";
+        }
+    };
+
     return (
         <div className="bg-white rounded-2xl sm:rounded-[24px] shadow-2xl p-5 sm:p-6 md:p-8 lg:p-10 w-full" style={{ fontFamily: 'var(--font-poppins)' }}>
           <div className="text-center mb-6">
@@ -51,15 +81,7 @@ export default function DashboardTypeCard() {
                 {dashboardTypes.map((dashboard, index) => (
                     <div
                         key={index}
-                        onClick={() => {
-                            if (dashboard.title === "Individual Dashboard") {
-                                window.location.href = "/individual/setup";
-
-                            }
-                            if(dashboard.title==="Company Dashboard"){
-                                window.location.href="/company/home";
-                            }
-                        }}
+                        onClick={() => handleCardClick(dashboard.title)}
                         className="group relative bg-[#E6E6E6] rounded-xl p-6 sm:p-8 md:p-10 lg:p-12 hover:bg-[#018FFF] hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 cursor-pointer"
                     >
                         <div className="flex flex-col items-center text-center">

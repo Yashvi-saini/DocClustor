@@ -93,9 +93,20 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/onboarding', request.url));
   }
 
-  // Case 4: Authenticated, profile is complete, trying to go to onboarding
-  if (decoded && decoded.profileComplete && pathname === '/onboarding') {
-    return NextResponse.redirect(new URL('/individual/home', request.url));
+  // Case 4: Authenticated, profile is complete, trying to go to onboarding or setup pages
+  if (decoded && decoded.profileComplete) {
+    if (
+      pathname === '/onboarding' ||
+      pathname === '/dummydash' ||
+      pathname === '/individual/setup'
+    ) {
+      return NextResponse.redirect(new URL('/individual/home', request.url));
+    }
+  }
+
+  // Case 5: Authenticated, profile NOT complete, trying to access /dummydash → send to onboarding
+  if (decoded && !decoded.profileComplete && pathname === '/dummydash') {
+    return NextResponse.redirect(new URL('/onboarding', request.url));
   }
 
   // Reset password flow gate

@@ -38,8 +38,12 @@ function OAuthCallbackContent() {
                 if (res.success) {
                     setStatus('Login successful! Redirecting...');
                     toast.success("Login Successful!");
-                    console.log('Redirecting to /dummydash');
-                    router.replace('/dummydash');
+                    const user = res.data?.user;
+                    if (user?.profileComplete) {
+                        router.replace('/individual/home');
+                    } else {
+                        router.replace('/onboarding');
+                    }
                 } else {
                     const errorMsg = (res as any).message || 'Authentication failed.';
                     setStatus(errorMsg);

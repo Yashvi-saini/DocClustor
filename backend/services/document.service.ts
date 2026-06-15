@@ -101,8 +101,10 @@ export async function createDocument(
 }
 
 export async function deleteDocument(workspaceContext: WorkspaceContext, documentId: string) {
+  // Only select the fields needed for authorization — skip the huge content column
   const doc = await prisma.document.findUnique({
     where: { id: documentId },
+    select: { id: true, userId: true, orgId: true, uploadedById: true, visibility: true, lockerId: true },
   });
 
   if (!doc) {

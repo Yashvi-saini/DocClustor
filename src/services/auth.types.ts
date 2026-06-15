@@ -41,8 +41,9 @@ export interface AuthUser {
 }
 
 export interface AuthUserResponse {
+    success?: boolean;
     statusCode?: number;
-    data?: AuthUser;
+    data?: { user: AuthUser };
     message?: string;
 }
 

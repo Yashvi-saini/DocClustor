@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo, useRef } from "react";
 import { useWorkspace } from "@/context/WorkspaceContext";
 import toast from "react-hot-toast";
 
@@ -69,6 +69,9 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     // User profile state
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
+    const loadingPromisesRef = useRef<Map<string, Promise<string>>>(new Map());
+    const localBlobUrlsRef = useRef<Map<string, string>>(new Map());
+
     const getHeaders = useCallback(() => {
         const headers: HeadersInit = {
             "Content-Type": "application/json",
@@ -91,17 +94,26 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
             });
             const json = await res.json();
             if (json.success && json.data?.documents) {
-                const mapped: FileItem[] = json.data.documents.map((doc: any) => ({
-                    id: doc.id,
-                    name: doc.title,
-                    type: doc.type,
-                    size: doc.fileSize ? formatFileSize(Number(doc.fileSize)) : "0 Bytes",
-                    url: doc.fileUrl || "",
-                    createdAt: new Date(doc.createdAt),
-                    isFavorite: localStorage.getItem(`fav_${doc.id}`) === "true",
-                    isLocked: doc.lockerId !== null,
-                }));
-                setFiles(mapped);
+                const mapped: FileItem[] = json.data.documents.map((doc: any) => {
+                    const localUrl = localBlobUrlsRef.current.get(doc.id);
+                    return {
+                        id: doc.id,
+                        name: doc.title,
+                        type: doc.type,
+                        size: doc.fileSize ? formatFileSize(Number(doc.fileSize)) : "0 Bytes",
+                        url: doc.fileUrl || localUrl || "",
+                        createdAt: new Date(doc.createdAt),
+                        isFavorite: localStorage.getItem(`fav_${doc.id}`) === "true",
+                        isLocked: doc.lockerId !== null,
+                    };
+                });
+                setFiles((prev) => {
+                    const urlMap = new Map(prev.map(f => [f.id, f.url]));
+                    return mapped.map(item => ({
+                        ...item,
+                        url: item.url || urlMap.get(item.id) || ""
+                    }));
+                });
             }
         } catch (error) {
             console.error("Failed to fetch documents:", error);
@@ -129,35 +141,48 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     const getFileBlobUrl = useCallback(async (file: FileItem) => {
         if (file.url) return file.url;
 
-        const toastId = toast.loading(`Loading content for "${file.name}"...`);
-        try {
-            const content = await fetchFileContent(file.id);
-            let blobUrl = "";
-
-            if (content.startsWith("data:")) {
-                const arr = content.split(',');
-                const mimeMatch = arr[0].match(/:(.*?);/);
-                const mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
-                const bstr = atob(arr[1]);
-                let n = bstr.length;
-                const u8arr = new Uint8Array(n);
-                while (n--) {
-                    u8arr[n] = bstr.charCodeAt(n);
-                }
-                const blob = new Blob([u8arr], { type: mime });
-                blobUrl = URL.createObjectURL(blob);
-            } else {
-                const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-                blobUrl = URL.createObjectURL(blob);
-            }
-
-            setFiles(prev => prev.map(f => f.id === file.id ? { ...f, url: blobUrl } : f));
-            toast.dismiss(toastId);
-            return blobUrl;
-        } catch (error: any) {
-            toast.error(error.message || "Failed to load content", { id: toastId });
-            throw error;
+        // Check if we have a locally created blob URL from upload
+        const localUrl = localBlobUrlsRef.current.get(file.id);
+        if (localUrl) {
+            setFiles(prev => prev.map(f => f.id === file.id ? { ...f, url: localUrl } : f));
+            return localUrl;
         }
+
+        // If there's an ongoing fetch for this file, return the existing promise
+        const existingPromise = loadingPromisesRef.current.get(file.id);
+        if (existingPromise) {
+            return existingPromise;
+        }
+
+        const promise = (async () => {
+            const toastId = toast.loading(`Loading content for "${file.name}"...`);
+            try {
+                const content = await fetchFileContent(file.id);
+                let blobUrl = "";
+
+                if (content.startsWith("data:")) {
+                    // Use browser's native async base64 decoding (100x faster than manual loops)
+                    const response = await fetch(content);
+                    const blob = await response.blob();
+                    blobUrl = URL.createObjectURL(blob);
+                } else {
+                    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+                    blobUrl = URL.createObjectURL(blob);
+                }
+
+                setFiles(prev => prev.map(f => f.id === file.id ? { ...f, url: blobUrl } : f));
+                toast.dismiss(toastId);
+                return blobUrl;
+            } catch (error: any) {
+                toast.error(error.message || "Failed to load content", { id: toastId });
+                throw error;
+            } finally {
+                loadingPromisesRef.current.delete(file.id);
+            }
+        })();
+
+        loadingPromisesRef.current.set(file.id, promise);
+        return promise;
     }, [fetchFileContent]);
 
     const checkLockerStatus = useCallback(async () => {
@@ -226,14 +251,12 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         }
     }, [fetchUserProfile]);
 
+    // Single initialization effect — all 3 calls fire in parallel
     useEffect(() => {
         fetchDocuments();
         checkLockerStatus();
-    }, [fetchDocuments, checkLockerStatus]);
-
-    useEffect(() => {
         fetchUserProfile();
-    }, [fetchUserProfile]);
+    }, [fetchDocuments, checkLockerStatus, fetchUserProfile]);
 
     const favorites = useMemo(() => files.filter((file) => file.isFavorite), [files]);
     const lockedFiles = useMemo(() => files.filter((file) => file.isLocked), [files]);
@@ -294,7 +317,29 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
                 }
 
                 toast.success(isLocked ? `"${file.name}" encrypted & saved` : `Uploaded ${file.name}`, { id: toastId });
-                await fetchDocuments();
+                
+                // Keep a local blob URL of the original file so it views instantly without any server roundtrip
+                if (!isLocked) {
+                    try {
+                        const localUrl = URL.createObjectURL(file);
+                        localBlobUrlsRef.current.set(newDoc.id, localUrl);
+                    } catch (err) {
+                        console.error("Failed to create local object URL:", err);
+                    }
+                }
+
+                // Optimistic insert — add the file to state immediately without a full refetch
+                const localUrl = localBlobUrlsRef.current.get(newDoc.id) || "";
+                setFiles(prev => [{
+                    id: newDoc.id,
+                    name: file.name,
+                    type: getFileType(file.name),
+                    size: formatFileSize(file.size),
+                    url: localUrl,
+                    createdAt: new Date(),
+                    isFavorite: false,
+                    isLocked: isLocked,
+                }, ...prev]);
             } catch (error: any) {
                 console.error("Upload failed:", error);
                 toast.error(error.message || "Upload failed", { id: toastId });
@@ -306,7 +351,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         } else {
             reader.readAsDataURL(file);
         }
-    }, [activeWorkspace, getHeaders, fetchDocuments]);
+    }, [activeWorkspace, getHeaders]);
 
     const toggleFavorite = useCallback((id: string) => {
         setFiles((prev) =>
@@ -322,6 +367,16 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const deleteFile = useCallback(async (id: string) => {
+        // Optimistic delete — remove from state instantly for snappy UX
+        setFiles(prev => prev.filter(f => f.id !== id));
+        
+        // Clean up any cached blob URLs
+        const cachedUrl = localBlobUrlsRef.current.get(id);
+        if (cachedUrl) {
+            try { URL.revokeObjectURL(cachedUrl); } catch (_) {}
+            localBlobUrlsRef.current.delete(id);
+        }
+
         try {
             const res = await fetch(`/api/documents?id=${id}`, {
                 method: "DELETE",
@@ -332,10 +387,11 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
                 throw new Error(json.message || "Failed to delete file");
             }
             toast.success("Document deleted successfully");
-            await fetchDocuments();
         } catch (error: any) {
             console.error("Delete failed:", error);
             toast.error(error.message || "Delete failed");
+            // Rollback — refetch the real state from server
+            await fetchDocuments();
         }
     }, [getHeaders, fetchDocuments]);
 

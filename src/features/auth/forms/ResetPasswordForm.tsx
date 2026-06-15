@@ -95,7 +95,12 @@ export default function ResetPasswordForm() {
                 });
                 if (loginResp && (loginResp.statusCode === 200 || loginResp.data)) {
                   toast.success("Logging you in...");
-                  router.push("/dummydash");
+                  const loginUser = (loginResp as any).data?.user;
+                  if (loginUser?.profileComplete) {
+                    router.push("/individual/home");
+                  } else {
+                    router.push("/onboarding");
+                  }
                 } else {
 
                   router.push("/login");

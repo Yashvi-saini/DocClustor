@@ -92,8 +92,8 @@ export default function VerifyForm() {
           sessionStorage.setItem("reset_email", email);
           router.push("/reset-password");
         } else {
-          // on success
-          router.push("/dummydash");
+          // on success — go to profile setup
+          router.push("/onboarding");
         }
       } else {
         const errorMsg = response?.message || "Verification failed. Invalid OTP.";

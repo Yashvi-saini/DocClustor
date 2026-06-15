@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { WorkspaceListItem } from "@backend/types/api.types";
 import toast from "react-hot-toast";
@@ -40,7 +40,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  const fetchWorkspaces = async () => {
+  const fetchWorkspaces = useCallback(async () => {
     try {
       const res = await fetch("/api/workspaces");
       const data = await res.json();
@@ -70,7 +70,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     // Only fetch workspaces if user is logged in (not on login/signup/onboarding routes)
@@ -88,7 +88,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }
   }, [pathname, hasFetched]);
 
-  const switchWorkspace = (workspaceId: string, customTarget?: WorkspaceListItem) => {
+  const switchWorkspace = useCallback((workspaceId: string, customTarget?: WorkspaceListItem) => {
     const target = customTarget || workspaces.find((w) => w.id === workspaceId);
     if (!target) {
       toast.error("Selected workspace not found");
@@ -108,18 +108,18 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     // Redirect user to the homepage of their newly selected workspace
     router.push(targetPath);
     setIsLoading(false);
-  };
+  }, [workspaces, router]);
+
+  const contextValue = useMemo(() => ({
+    workspaces,
+    activeWorkspace,
+    isLoading,
+    switchWorkspace,
+    refreshWorkspaces: fetchWorkspaces,
+  }), [workspaces, activeWorkspace, isLoading, switchWorkspace, fetchWorkspaces]);
 
   return (
-    <WorkspaceContext.Provider
-      value={{
-        workspaces,
-        activeWorkspace,
-        isLoading,
-        switchWorkspace,
-        refreshWorkspaces: fetchWorkspaces,
-      }}
-    >
+    <WorkspaceContext.Provider value={contextValue}>
       {children}
     </WorkspaceContext.Provider>
   );

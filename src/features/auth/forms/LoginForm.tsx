@@ -59,9 +59,16 @@ export default function LoginForm() {
         password: data.password,
       });
 
-      if (response && response.data) {
+      if (response?.success) {
         toast.success("Login Successful!");
-        router.push("/dummydash");
+        const user = response.data?.user;
+        if (user?.profileComplete) {
+          // Returning user — go straight to dashboard
+          router.push("/individual/home");
+        } else {
+          // New user — needs to complete profile setup
+          router.push("/onboarding");
+        }
       } else {
         const errorMsg = response.message || "Login failed. Please check your credentials.";
         setApiError(errorMsg);

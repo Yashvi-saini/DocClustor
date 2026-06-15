@@ -11,6 +11,7 @@ export function RecentFilesSection() {
     const { files, isLoadingFiles, toggleFavorite, deleteFile, isLockerUnlocked, getFileBlobUrl } = useDashboard();
     const [pinModalOpen, setPinModalOpen] = React.useState(false);
     const [pendingAction, setPendingAction] = React.useState<{ file: FileItem; type: 'preview' | 'download' } | null>(null);
+    const [viewMode, setViewMode] = React.useState<'list' | 'grid'>('list');
 
     const executeAction = async (file: FileItem, type: 'preview' | 'download') => {
         try {
@@ -129,73 +130,149 @@ export function RecentFilesSection() {
         <div className="w-full">
             <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold font-poppins text-black">Recents</h2>
-                {/* View toggles can be functional later */}
                 <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" className="text-blue-500"><List size={20} /></Button>
-                    <Button variant="ghost" size="icon" className="text-gray-400"><LayoutGrid size={20} /></Button>
+                    <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => setViewMode('list')}
+                        className={viewMode === 'list' ? 'text-[#018FFF] bg-[#018FFF]/10' : 'text-gray-400 hover:text-gray-600'}
+                    >
+                        <List size={20} />
+                    </Button>
+                    <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => setViewMode('grid')}
+                        className={viewMode === 'grid' ? 'text-[#018FFF] bg-[#018FFF]/10' : 'text-gray-400 hover:text-gray-600'}
+                    >
+                        <LayoutGrid size={20} />
+                    </Button>
                 </div>
             </div>
 
-            <div className="space-y-3 pb-4">
-                {currentFiles.map((file) => (
-                    <div
-                        key={file.id}
-                        className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-100"
-                    >
-                        <div className="flex items-center gap-4">
-                            {getFileIcon(file.type)}
-                            <div className="flex flex-col">
-                                <h3 className="font-semibold text-gray-900 truncate max-w-[200px] sm:max-w-md">{file.name}</h3>
-                                <p className="text-xs text-gray-500 font-medium">
+            {viewMode === 'list' ? (
+                <div className="space-y-3 pb-4">
+                    {currentFiles.map((file) => (
+                        <div
+                            key={file.id}
+                            className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-100"
+                        >
+                            <div className="flex items-center gap-4">
+                                {getFileIcon(file.type)}
+                                <div className="flex flex-col">
+                                    <h3 className="font-semibold text-gray-900 truncate max-w-[200px] sm:max-w-md">{file.name}</h3>
+                                    <p className="text-xs text-gray-500 font-medium">
+                                        {file.type} • {file.isLocked ? "Locked" : file.size}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 sm:gap-3">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => toggleFavorite(file.id)}
+                                    className={file.isFavorite ? "text-yellow-500" : "text-gray-300 hover:text-yellow-400"}
+                                >
+                                    <Star fill={file.isFavorite ? "currentColor" : "none"} size={18} />
+                                </Button>
+
+                                {file.isLocked && <Lock size={16} className="text-gray-400" />}
+
+                                <div className="hidden sm:flex items-center gap-2">
+                                    <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={() => handlePreview(file)}
+                                        className="bg-gray-200 hover:bg-gray-300 text-gray-700 h-8 text-xs font-medium gap-1"
+                                    >
+                                        <Eye size={14} /> View
+                                    </Button>
+                                    <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={() => handleDownload(file)}
+                                        className="bg-gray-200 hover:bg-gray-300 text-gray-700 h-8 text-xs font-medium gap-1"
+                                    >
+                                        <Download size={14} /> Download
+                                    </Button>
+                                </div>
+
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-red-400 hover:text-red-600 hover:bg-red-50"
+                                    onClick={() => deleteFile(file.id)}
+                                >
+                                    <Trash2 size={18} />
+                                </Button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pb-4">
+                    {currentFiles.map((file) => (
+                        <div 
+                            key={file.id} 
+                            className="group relative bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-[#018FFF]/30 transition-all flex flex-col"
+                        >
+                            <div className="flex items-center justify-between w-full mb-3">
+                                <div className="flex items-center gap-2">
+                                    {file.isLocked && <Lock size={15} className="text-gray-400 shrink-0" />}
+                                    {getFileIcon(file.type)}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => toggleFavorite(file.id)}
+                                        className={`h-8 w-8 rounded-lg ${file.isFavorite ? "text-yellow-500" : "text-gray-300 hover:text-yellow-400"}`}
+                                    >
+                                        <Star fill={file.isFavorite ? "currentColor" : "none"} size={16} />
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50"
+                                        onClick={() => deleteFile(file.id)}
+                                    >
+                                        <Trash2 size={16} />
+                                    </Button>
+                                </div>
+                            </div>
+                            
+                            <div className="flex-1 min-w-0 mb-3">
+                                <h3 className="font-semibold text-gray-900 text-sm truncate" title={file.name}>
+                                    {file.name}
+                                </h3>
+                                <p className="text-[11px] text-gray-400 font-semibold">
                                     {file.type} • {file.isLocked ? "Locked" : file.size}
                                 </p>
                             </div>
-                        </div>
 
-                        <div className="flex items-center gap-2 sm:gap-3">
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => toggleFavorite(file.id)}
-                                className={file.isFavorite ? "text-yellow-500" : "text-gray-300 hover:text-yellow-400"}
-                            >
-                                <Star fill={file.isFavorite ? "currentColor" : "none"} size={18} />
-                            </Button>
-
-                            {file.isLocked && <Lock size={16} className="text-gray-400" />}
-
-                            <div className="hidden sm:flex items-center gap-2">
+                            <div className="flex items-center gap-2 pt-3 border-t border-gray-100 mt-auto">
                                 <Button
                                     variant="secondary"
                                     size="sm"
                                     onClick={() => handlePreview(file)}
-                                    className="bg-gray-200 hover:bg-gray-300 text-gray-700 h-8 text-xs font-medium gap-1"
+                                    className="flex-1 bg-gray-50 hover:bg-gray-100 border border-gray-100 text-gray-700 h-8 text-xs font-semibold gap-1"
                                 >
-                                    <Eye size={14} /> View
+                                    <Eye size={12} /> View
                                 </Button>
                                 <Button
                                     variant="secondary"
                                     size="sm"
                                     onClick={() => handleDownload(file)}
-                                    className="bg-gray-200 hover:bg-gray-300 text-gray-700 h-8 text-xs font-medium gap-1"
+                                    className="flex-1 bg-gray-50 hover:bg-gray-100 border border-gray-100 text-gray-700 h-8 text-xs font-semibold gap-1"
                                 >
-                                    <Download size={14} /> Download
+                                    <Download size={12} /> Save
                                 </Button>
                             </div>
-
-                            {/* Mobile Actions / Delete */}
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-red-400 hover:text-red-600 hover:bg-red-50"
-                                onClick={() => deleteFile(file.id)}
-                            >
-                                <Trash2 size={18} />
-                            </Button>
                         </div>
-                    </div>
-                ))}
-            </div>
+                    ))}
+                </div>
+            )}
 
             {/* Pagination Controls */}
             {totalPages > 1 && (

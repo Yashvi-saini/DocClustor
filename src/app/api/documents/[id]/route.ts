@@ -12,6 +12,7 @@ export async function GET(
 
     const doc = await prisma.document.findUnique({
       where: { id: documentId },
+      select: { content: true, userId: true, orgId: true, lockerId: true },
     });
 
     if (!doc) {

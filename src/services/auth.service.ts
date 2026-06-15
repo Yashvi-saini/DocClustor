@@ -59,7 +59,7 @@ class AuthService {
             credentials: 'include'
         });
 
-        if (response && (response as any).success) {
+        if (response?.success) {
             this.setCookie('is_authenticated', 'true');
         }
 
