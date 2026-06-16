@@ -15,7 +15,7 @@ export function DashboardHeader({ username, avatarUrl }: DashboardHeaderProps) {
     return (
         <div className="flex items-center justify-between w-full mb-6">
             <h1 className="text-2xl font-bold font-poppins text-black">
-                Good Morning , {username}
+            Hello , {username}
             </h1>
             <Link href={`${basePath}/profile`}>
                 <div className="relative w-12 h-12 rounded-full overflow-hidden bg-gray-200 border-2 border-white shadow-sm hover:ring-2 hover:ring-[#0B76FF] transition-all cursor-pointer">
