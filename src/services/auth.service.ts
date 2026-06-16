@@ -104,20 +104,18 @@ class AuthService {
     }
 
     initiateGoogleOAuth() {
-        console.warn('[AuthService] Google OAuth not yet configured for new backend');
-        alert('Google Sign-In is being set up. Please use email/password for now.');
+        window.location.href = '/api/auth/google/login';
     }
 
     initiateGithubOAuth() {
-
-        console.warn('[AuthService] GitHub OAuth not yet configured for new backend');
-        alert('GitHub Sign-In is being set up. Please use email/password for now.');
+        window.location.href = '/api/auth/github/login';
     }
 
     async exchangeOAuthToken(tempOAuthToken: string): Promise<OAuthTokenResponse> {
         const response = await this.request<OAuthTokenResponse>('/auth/oauth/token', {
             method: 'POST',
-            body: JSON.stringify({ tempOAuthToken })
+            body: JSON.stringify({ tempOAuthToken }),
+            credentials: 'include'
         });
 
         if (response && response.success && response.data?.tokens?.accessToken) {
