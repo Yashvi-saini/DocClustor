@@ -86,17 +86,23 @@ export function LockerUI() {
         lockedUntil,
         unlockLocker,
         setupLocker,
-        lockLocker
+        lockLocker,
+        sendResetLockerPinOtp,
+        verifyAndResetLockerPin
     } = useDashboard();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    type View = "setup" | "confirm" | "enter" | "vault";
+    type View = "setup" | "confirm" | "enter" | "vault" | "reset_otp" | "reset_pin" | "reset_confirm";
     const [view, setView]       = useState<View>("enter");
     const [mounted, setMounted] = useState(false);
 
     const [newPin,     setNewPin]     = useState("");
     const [confirmPin, setConfirmPin] = useState("");
     const [enterPin,   setEnterPin]   = useState("");
+
+    const [resetOtp,        setResetOtp]        = useState("");
+    const [resetNewPin,     setResetNewPin]     = useState("");
+    const [resetConfirmPin, setResetConfirmPin] = useState("");
 
     const [pinError,      setPinError]      = useState("");
     const [mismatchError, setMismatchError] = useState(false);
@@ -107,7 +113,7 @@ export function LockerUI() {
         } else if (isLockerUnlocked) {
             setView("vault");
         } else {
-            setView("enter");
+            setView(prev => ["reset_otp", "reset_pin", "reset_confirm"].includes(prev) ? prev : "enter");
         }
         setMounted(true);
     }, [hasLocker, isLockerUnlocked]);
@@ -202,6 +208,60 @@ export function LockerUI() {
         }
     };
 
+    const handleResetOtp = (n: string) => {
+        if (resetOtp.length < 6) {
+            const next = resetOtp + n;
+            setResetOtp(next);
+            if (next.length === 6) {
+                setTimeout(() => {
+                    setView("reset_pin");
+                }, 300);
+            }
+        }
+    };
+
+    const handleResetNewPin = (n: string) => {
+        if (resetNewPin.length < 4) {
+            const next = resetNewPin + n;
+            setResetNewPin(next);
+            if (next.length === 4) {
+                setTimeout(() => {
+                    setView("reset_confirm");
+                }, 300);
+            }
+        }
+    };
+
+    const handleResetConfirmPin = (n: string) => {
+        if (resetConfirmPin.length < 4) {
+            const next = resetConfirmPin + n;
+            setResetConfirmPin(next);
+            if (next.length === 4) {
+                setTimeout(async () => {
+                    if (next === resetNewPin) {
+                        try {
+                            await verifyAndResetLockerPin(resetOtp, next);
+                            setResetOtp("");
+                            setResetNewPin("");
+                            setResetConfirmPin("");
+                        } catch (err: any) {
+                            toast.error(err.message || "Failed to reset PIN");
+                            setResetConfirmPin("");
+                            setResetNewPin("");
+                            setResetOtp("");
+                            setView("enter");
+                        }
+                    } else {
+                        toast.error("PINs don't match");
+                        setResetConfirmPin("");
+                        setResetNewPin("");
+                        setView("reset_pin");
+                    }
+                }, 300);
+            }
+        }
+    };
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -210,8 +270,16 @@ export function LockerUI() {
         }
     };
 
-    const handleReset = () => {
-        toast.error("Contact administration to reset your master key.", { icon: "🔒" });
+    const handleReset = async () => {
+        const toastId = toast.loading("Sending verification OTP to your email...");
+        try {
+            await sendResetLockerPinOtp();
+            setView("reset_otp");
+            toast.dismiss(toastId);
+        } catch (err: any) {
+            toast.dismiss(toastId);
+            toast.error(err.message || "Failed to send OTP");
+        }
     };
 
     if (!mounted) return null;
@@ -346,6 +414,81 @@ export function LockerUI() {
                                         Forgot PIN? Reset
                                     </button>
                                 </div>
+                            </PinPanel>
+                        </div>
+                    </motion.div>
+                )}
+
+                {/* ══ RESET PIN OTP ══════════════════════════════════ */}
+                {view === "reset_otp" && (
+                    <motion.div key="reset_otp" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.22 }}>
+                        <div className="flex gap-5 items-stretch">
+                            <LockerBrand />
+                            <PinPanel
+                                title="Reset Locker PIN"
+                                subtitle="Enter the 6-digit verification code sent to your email."
+                            >
+                                <PinDots pin={resetOtp} maxLength={6} sizeClassName="w-10 h-10" />
+                                <Keypad
+                                    onPress={handleResetOtp}
+                                    onDelete={() => setResetOtp(p => p.slice(0, -1))}
+                                />
+                                <button
+                                    onClick={() => { setView("enter"); setResetOtp(""); }}
+                                    className="text-xs text-gray-400 hover:text-[#018FFF] transition-colors text-left w-fit underline"
+                                >
+                                    Cancel
+                                </button>
+                            </PinPanel>
+                        </div>
+                    </motion.div>
+                )}
+
+                {/* ══ RESET NEW PIN ══════════════════════════════════ */}
+                {view === "reset_pin" && (
+                    <motion.div key="reset_pin" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.22 }}>
+                        <div className="flex gap-5 items-stretch">
+                            <LockerBrand isSetup />
+                            <PinPanel
+                                title="Enter New PIN"
+                                subtitle="Choose a new 4-digit PIN for your locker."
+                            >
+                                <PinDots pin={resetNewPin} />
+                                <Keypad
+                                    onPress={handleResetNewPin}
+                                    onDelete={() => setResetNewPin(p => p.slice(0, -1))}
+                                />
+                                <button
+                                    onClick={() => { setView("reset_otp"); setResetNewPin(""); }}
+                                    className="text-xs text-gray-400 hover:text-[#018FFF] transition-colors text-left w-fit underline"
+                                >
+                                    ← Back to OTP verification
+                                </button>
+                            </PinPanel>
+                        </div>
+                    </motion.div>
+                )}
+
+                {/* ══ RESET CONFIRM PIN ══════════════════════════════ */}
+                {view === "reset_confirm" && (
+                    <motion.div key="reset_confirm" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.22 }}>
+                        <div className="flex gap-5 items-stretch">
+                            <LockerBrand isSetup />
+                            <PinPanel
+                                title="Confirm New PIN"
+                                subtitle="Re-enter your new 4-digit PIN to verify."
+                            >
+                                <PinDots pin={resetConfirmPin} />
+                                <Keypad
+                                    onPress={handleResetConfirmPin}
+                                    onDelete={() => setResetConfirmPin(p => p.slice(0, -1))}
+                                />
+                                <button
+                                    onClick={() => { setView("reset_pin"); setResetConfirmPin(""); }}
+                                    className="text-xs text-gray-400 hover:text-[#018FFF] transition-colors text-left w-fit underline"
+                                >
+                                    ← Back to New PIN setup
+                                </button>
                             </PinPanel>
                         </div>
                     </motion.div>

@@ -46,6 +46,8 @@ interface DashboardContextType {
     setupLocker: (pin: string) => Promise<boolean>;
     lockLocker: () => Promise<void>;
     refreshFiles: () => Promise<void>;
+    sendResetLockerPinOtp: () => Promise<boolean>;
+    verifyAndResetLockerPin: (otp: string, pin: string) => Promise<boolean>;
 
     // User profile states & methods
     userProfile: UserProfile | null;
@@ -450,6 +452,47 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         }
     }, [getHeaders, checkLockerStatus]);
 
+    const sendResetLockerPinOtp = useCallback(async (): Promise<boolean> => {
+        try {
+            const res = await fetch("/api/locker/reset-pin/send", {
+                method: "POST",
+                headers: getHeaders(),
+            });
+            const json = await res.json();
+            if (json.success) {
+                toast.success(json.message || "Verification OTP sent!");
+                return true;
+            } else {
+                throw new Error(json.message || "Failed to send verification OTP");
+            }
+        } catch (error: any) {
+            toast.error(error.message || "Failed to send OTP");
+            throw error;
+        }
+    }, [getHeaders]);
+
+    const verifyAndResetLockerPin = useCallback(async (otp: string, pin: string): Promise<boolean> => {
+        try {
+            const res = await fetch("/api/locker/reset-pin/verify", {
+                method: "POST",
+                headers: getHeaders(),
+                body: JSON.stringify({ otp, pin }),
+            });
+            const json = await res.json();
+            if (json.success) {
+                toast.success("PIN reset successfully! Locker unlocked.");
+                setIsLockerUnlocked(true);
+                await checkLockerStatus();
+                return true;
+            } else {
+                throw new Error(json.message || "Failed to reset PIN");
+            }
+        } catch (error: any) {
+            toast.error(error.message || "Failed to reset PIN");
+            throw error;
+        }
+    }, [getHeaders, checkLockerStatus]);
+
     const contextValue = useMemo(() => ({
         files,
         isLoadingFiles,
@@ -471,6 +514,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         userProfile,
         fetchUserProfile,
         updateUserProfile,
+        sendResetLockerPinOtp,
+        verifyAndResetLockerPin,
     }), [
         files,
         isLoadingFiles,
@@ -492,6 +537,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         userProfile,
         fetchUserProfile,
         updateUserProfile,
+        sendResetLockerPinOtp,
+        verifyAndResetLockerPin,
     ]);
 
     return (

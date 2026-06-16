@@ -156,3 +156,24 @@ export async function unlockDocument(workspaceContext: WorkspaceContext, documen
     },
   });
 }
+
+export async function resetLockerPin(workspaceContext: WorkspaceContext, pin: string) {
+  const locker = await getLocker(workspaceContext);
+  if (!locker) {
+    throw new Error('Locker has not been set up yet.');
+  }
+
+  const salt = generateSalt(32);
+  const pinHash = await derivePinHash(pin, salt);
+
+  return prisma.locker.update({
+    where: { id: locker.id },
+    data: {
+      pinHash,
+      pinSalt: salt,
+      failedAttempts: 0,
+      lockedUntil: null,
+    },
+  });
+}
+
