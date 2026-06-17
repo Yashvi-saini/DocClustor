@@ -102,11 +102,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     // Show dynamic success toast
     toast.success(`Switched to ${target.name}`);
 
-    // Determine target dashboard path based on workspace type
-    const targetPath = target.type === "personal" ? "/individual/home" : "/company/home";
-    
-    // Redirect user to the homepage of their newly selected workspace
-    router.push(targetPath);
+    // Redirect user to the unified dashboard homepage
+    router.push("/dashboard/home");
     setIsLoading(false);
   }, [workspaces, router]);
 

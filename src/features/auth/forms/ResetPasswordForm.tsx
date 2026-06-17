@@ -97,7 +97,7 @@ export default function ResetPasswordForm() {
                   toast.success("Logging you in...");
                   const loginUser = (loginResp as any).data?.user;
                   if (loginUser?.profileComplete) {
-                    router.push("/individual/home");
+                    router.push("/dashboard/home");
                   } else {
                     router.push("/onboarding");
                   }

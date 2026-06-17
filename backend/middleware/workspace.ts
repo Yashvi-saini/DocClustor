@@ -39,11 +39,18 @@ export async function requireWorkspace(request: NextRequest): Promise<WorkspaceC
       },
       select: {
         role: true,
+        status: true,
       },
     });
 
     if (!membership) {
       const err = new Error('Access Denied. You are not a member of this workspace.');
+      (err as any).status = 403;
+      throw err;
+    }
+
+    if (membership.status === 'PENDING') {
+      const err = new Error('Access Denied. Your invitation to join this workspace is pending.');
       (err as any).status = 403;
       throw err;
     }

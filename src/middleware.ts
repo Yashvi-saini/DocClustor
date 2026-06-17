@@ -75,7 +75,7 @@ export async function middleware(request: NextRequest) {
   // Case 2: Authenticated but trying to access login/signup
   if (isAuthRoute && decoded) {
     if (decoded.profileComplete) {
-      return NextResponse.redirect(new URL('/individual/home', request.url));
+      return NextResponse.redirect(new URL('/dashboard/home', request.url));
     } else {
       return NextResponse.redirect(new URL('/onboarding', request.url));
     }
@@ -98,15 +98,23 @@ export async function middleware(request: NextRequest) {
     if (
       pathname === '/onboarding' ||
       pathname === '/dummydash' ||
-      pathname === '/individual/setup'
+      pathname === '/individual/setup' ||
+      pathname === '/company/setup'
     ) {
-      return NextResponse.redirect(new URL('/individual/home', request.url));
+      return NextResponse.redirect(new URL('/dashboard/home', request.url));
     }
   }
 
   // Case 5: Authenticated, profile NOT complete, trying to access /dummydash → send to onboarding
   if (decoded && !decoded.profileComplete && pathname === '/dummydash') {
     return NextResponse.redirect(new URL('/onboarding', request.url));
+  }
+
+  // Case 6: Redirect legacy routes (/individual/*, /company/*) to unified /dashboard/*
+  if (pathname.startsWith('/individual') || pathname.startsWith('/company')) {
+    const suffix = pathname.replace(/^\/(individual|company)/, '');
+    const target = `/dashboard${suffix === '' || suffix === '/' ? '/home' : suffix}`;
+    return NextResponse.redirect(new URL(target, request.url));
   }
 
   // Reset password flow gate

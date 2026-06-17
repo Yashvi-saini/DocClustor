@@ -33,3 +33,15 @@ export function unauthorized() {
     { status: 401 }
   );
 }
+
+export function handleAuthError(error: any) {
+  const message = error instanceof Error ? error.message : 'Authentication failed';
+  if (message === 'No authentication token found' || message === 'Invalid or expired token') {
+    return unauthorized();
+  }
+  const status = error.status || 500;
+  return Response.json(
+    { success: false, message },
+    { status }
+  );
+}

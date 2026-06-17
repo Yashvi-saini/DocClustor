@@ -109,7 +109,7 @@ export default function SetupWizard() {
                 
                 // Refresh routing and redirect to dashboard
                 router.refresh();
-                router.push("/individual/home");
+                router.push("/dashboard/home");
             } catch (err: any) {
                 toast.error(err.message || "Failed to setup profile.");
             } finally {

@@ -64,7 +64,7 @@ export default function LoginForm() {
         const user = response.data?.user;
         if (user?.profileComplete) {
           // Returning user — go straight to dashboard
-          router.push("/individual/home");
+          router.push("/dashboard/home");
         } else {
           // New user — needs to complete profile setup
           router.push("/onboarding");

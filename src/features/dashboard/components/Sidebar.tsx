@@ -17,13 +17,13 @@ interface SidebarItem {
   href: string;
 }
 
-const getSidebarItems = (basePath: string): SidebarItem[] => [
-  { label: "Home", iconPath: "/dashboard/home.svg", href: `${basePath}/home` },
-  { label: "Locker", iconPath: "/dashboard/locker.svg", href: `${basePath}/locker` },
-  { label: "Documents", iconPath: "/dashboard/documents.svg", href: `${basePath}/documents` },
-  { label: "RAG Bot", iconPath: "/dashboard/bot.svg", href: `${basePath}/rag-bot` },
-  { label: "Profile", iconPath: "/dashboard/profile.svg", href: `${basePath}/profile` },
-  { label: "Settings", iconPath: "/dashboard/settings.svg", href: `${basePath}/settings` },
+const sidebarItems: SidebarItem[] = [
+  { label: "Home", iconPath: "/dashboard/home.svg", href: "/dashboard/home" },
+  { label: "Locker", iconPath: "/dashboard/locker.svg", href: "/dashboard/locker" },
+  { label: "Documents", iconPath: "/dashboard/documents.svg", href: "/dashboard/documents" },
+  { label: "RAG Bot", iconPath: "/dashboard/bot.svg", href: "/dashboard/rag-bot" },
+  { label: "Profile", iconPath: "/dashboard/profile.svg", href: "/dashboard/profile" },
+  { label: "Settings", iconPath: "/dashboard/settings.svg", href: "/dashboard/settings" },
 ];
 
 export function Sidebar() {
@@ -33,9 +33,6 @@ export function Sidebar() {
   const [showWorkspaceDropdown, setShowWorkspaceDropdown] = useState(false);
 
   const { workspaces, activeWorkspace, switchWorkspace, isLoading } = useWorkspace();
-
-  const basePath = activeWorkspace?.type === "org" ? "/company" : "/individual";
-  const sidebarItems = getSidebarItems(basePath);
 
   const handleLogout = async () => {
     try {
@@ -166,7 +163,7 @@ export function Sidebar() {
                 })}
 
                 <div className="border-t border-white/10 mt-2 pt-2 px-2">
-                  <Link href="/company/setup" onClick={() => setShowWorkspaceDropdown(false)}>
+                  <Link href="/dashboard/setup" onClick={() => setShowWorkspaceDropdown(false)}>
                     <Button
                       variant="ghost"
                       size="sm"

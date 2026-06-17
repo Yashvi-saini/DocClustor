@@ -1,6 +1,6 @@
 import { prisma } from '../db/prisma';
 import { OrgCreatePayload, WorkspaceListItem } from '../types/api.types';
-import { OrgRole } from '@prisma/client';
+import { OrgRole, MembershipStatus } from '@prisma/client';
 
 export async function createOrganisation(
   userId: string,
@@ -58,7 +58,7 @@ export async function listWorkspaces(userId: string): Promise<WorkspaceListItem[
   }
 
   const memberships = await prisma.orgMembership.findMany({
-    where: { userId },
+    where: { userId, status: MembershipStatus.ACTIVE },
     include: {
       org: {
         select: {
@@ -137,6 +137,7 @@ export async function inviteToOrganisation(
       userId: targetUser.id,
       orgId,
       role,
+      status: MembershipStatus.PENDING,
     },
   });
 }

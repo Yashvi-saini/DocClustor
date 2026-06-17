@@ -64,16 +64,22 @@ model Organisation {
 // ─── ORG MEMBERSHIP (User <-> Organisation bridge) 
 
 model OrgMembership {
-  id        String   @id @default(uuid())
+  id        String           @id @default(uuid())
   userId    String
   orgId     String
-  role      OrgRole  @default(VIEWER)
-  joinedAt  DateTime @default(now())
+  role      OrgRole          @default(VIEWER)
+  status    MembershipStatus @default(ACTIVE)
+  joinedAt  DateTime         @default(now())
 
   user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   org  Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
   @@unique([userId, orgId])
+}
+
+enum MembershipStatus {
+  PENDING
+  ACTIVE
 }
 
 enum OrgRole {

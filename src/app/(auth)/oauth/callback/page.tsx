@@ -40,7 +40,7 @@ function OAuthCallbackContent() {
                     toast.success("Login Successful!");
                     const user = res.data?.user;
                     if (user?.profileComplete) {
-                        router.replace('/individual/home');
+                        router.replace('/dashboard/home');
                     } else {
                         router.replace('/onboarding');
                     }
