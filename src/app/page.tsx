@@ -5,8 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Shield, 
-  ArrowRight, 
   Menu, 
   X 
 } from "lucide-react";
@@ -205,6 +203,9 @@ export default function Home() {
             <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight leading-tight">
               Capabilities
             </h2>
+            <p className="mt-4 text-slate-400 text-sm md:text-base leading-relaxed max-w-2xl">
+              Explore our core technical architecture designed to secure your team knowledge. Leverage private retrieval-augmented intelligence under strict access control boundaries.
+            </p>
           </div>
 
           {/* Bento Grid */}
@@ -365,9 +366,7 @@ export default function Home() {
       <section id="security" className="py-24 bg-white">
         <div className="mx-auto max-w-7xl px-6 md:px-8">
           <div className="max-w-3xl mx-auto text-center mb-16">
-            <h2 className="text-xs font-bold text-[#1E9BFF] tracking-wider uppercase mb-3">
-              Certifications & Compliance
-            </h2>
+           
             <p className="text-3xl font-extrabold text-[#003259] tracking-tight">
               Enterprise architecture. Compliant standards.
             </p>
@@ -490,16 +489,6 @@ export default function Home() {
               &copy; {new Date().getFullYear()} DocClustor. All rights reserved.
             </p>
             <div className="flex gap-6">
-              <a 
-                href="https://github.com" 
-                target="_blank" 
-                rel="noreferrer" 
-                className="hover:opacity-85 hover:scale-105 transition-all w-5 h-5 relative"
-                aria-label="GitHub Profile"
-              >
-                <Image src="/github.svg" alt="GitHub icon" fill className="object-contain" />
-              </a>
-              <span className="text-slate-300">|</span>
               <span className="hover:text-[#1E9BFF] transition-colors text-xs cursor-pointer">Privacy Policy</span>
               <span className="hover:text-[#1E9BFF] transition-colors text-xs cursor-pointer">Terms of Service</span>
             </div>
