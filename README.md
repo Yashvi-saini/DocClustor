@@ -33,3 +33,11 @@ DocClustor is a secure, multi-tenant document management and retrieval-augmented
 * **Security:** PBKDF2 key derivation, AES-256-GCM symmetric encryption
 
 
+
+![alt text](image-6.png)
+![alt text](image-7.png)
+![alt text](image.png)
+![alt text](image-1.png)
+![alt text](image-3.png)
+![alt text](image-4.png)
+![alt text](image-5.png)
