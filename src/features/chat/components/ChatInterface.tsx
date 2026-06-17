@@ -51,6 +51,90 @@ function SourceBadge({ source }: { source: Source }) {
   );
 }
 
+function renderMarkdown(content: string, isUser = false) {
+  const lines = content.split('\n');
+  const elements: React.ReactNode[] = [];
+  let currentList: React.ReactNode[] = [];
+  let inList = false;
+
+  const parseInlineStyles = (text: string) => {
+    const parts = text.split(/(\*\*.*?\*\*|`.*?`|\{\{.*?\}\})/g);
+    return parts.map((part, idx) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return (
+          <strong key={idx} className={cn("font-extrabold", isUser ? "text-white" : "text-[#00172B]")}>
+            {part.slice(2, -2)}
+          </strong>
+        );
+      }
+      if (part.startsWith('`') && part.endsWith('`')) {
+        return (
+          <code key={idx} className={cn("px-1.5 py-0.5 rounded font-mono text-xs border", 
+            isUser ? "bg-white/10 text-white border-white/20" : "bg-gray-100 text-red-500 border-gray-200"
+          )}>
+            {part.slice(1, -1)}
+          </code>
+        );
+      }
+      if (part.startsWith('{{') && part.endsWith('}}')) {
+        return (
+          <span key={idx} className={cn("px-1.5 py-0.5 rounded font-semibold font-mono text-[11px] border", 
+            isUser ? "bg-white/20 text-white border-white/30" : "bg-blue-50 text-[#1E9BFF] border-blue-100"
+          )}>
+            {part}
+          </span>
+        );
+      }
+      return part;
+    });
+  };
+
+  lines.forEach((line, lineIdx) => {
+    const trimmed = line.trim();
+    
+    if (trimmed.startsWith('* ') || trimmed.startsWith('- ')) {
+      if (!inList) {
+        inList = true;
+      }
+      currentList.push(
+        <li key={`li-${lineIdx}`} className={cn("list-disc ml-5 mb-1 text-[13px] leading-relaxed", isUser ? "text-white/95" : "text-gray-700")}>
+          {parseInlineStyles(trimmed.substring(2))}
+        </li>
+      );
+    } else {
+      if (inList) {
+        elements.push(
+          <ul key={`ul-${lineIdx}`} className="my-2 space-y-1">
+            {currentList}
+          </ul>
+        );
+        currentList = [];
+        inList = false;
+      }
+      
+      if (trimmed === '') {
+        elements.push(<div key={`spacer-${lineIdx}`} className="h-2" />);
+      } else {
+        elements.push(
+          <p key={`p-${lineIdx}`} className={cn("mb-1.5 last:mb-0 text-[13px] leading-relaxed", isUser ? "text-white" : "text-gray-700")}>
+            {parseInlineStyles(line)}
+          </p>
+        );
+      }
+    }
+  });
+
+  if (inList && currentList.length > 0) {
+    elements.push(
+      <ul key="ul-final" className="my-2 space-y-1">
+        {currentList}
+      </ul>
+    );
+  }
+
+  return <div className="space-y-1">{elements}</div>;
+}
+
 const EMOJIS = ["😀", "😃", "😄", "😁", "😆", "😅", "😂", "🤣", "😊", "😇", "🙂", "🙃", "😉", "😌", "😍", "🥰", "😘", "😗", "😙", "😚", "😋", "😛", "😝", "😜", "🤪", "🤨", "🧐", "🤓", "😎", "🤩", "🥳", "😏", "😒", "😞", "😔", "😟", "😕", "🙁", "☹️", "😣", "😖", "😫", "😩", "🥺", "😢", "😭", "😤", "😠", "😡", "🤬", "🤯", "😳", "🥵", "🥶", "😱", "😨", "😰", "😥", "😓", "🤗", "🤔", "🤭", "🤫", "🤥", "😶", "😐", "😑", "😬", "🙄", "😯", "😦", "😧", "😮", "😲", "🥱", "😴", "🤤", "😪", "😵", "🤐", "🥴", "🤢", "🤮", "🤧", "😷", "🤒", "🤕", "🤑", "🤠", "😈", "👿", "👹", "👺", "🤡", "💩", "👻", "💀", "☠️", "👽", "👾", "🤖", "🎃", "😺", "😸", "😹", "😻", "😼", "😽", "🙀", "😿", "😾", "👋", "🤚", "🖐️", "✋", "🖖", "👌", "🤌", "🤏", "✌️", "🤞", "🤟", "🤘", "🤙", "👈", "👉", "👆", "🖕", "👇", "☝️", "👍", "👎", "✊", "👊", "🤛", "🤜", "👏", "🙌", "👐", "🤲", "🤝", "🙏", "✍️", "💅", "🤳", "💪", "🦾", "⚙️", "🧑‍💻", "✍️", "🚀", "💡", "🔥", "✨", "🎉", "📅", "📎", "🔒", "🔑", "🛡️"];
 
 export function ChatInterface() {
@@ -390,7 +474,7 @@ export function ChatInterface() {
                                         ? "bg-[#1E9BFF] text-white rounded-2xl rounded-tr-sm shadow-[0_2px_10px_rgba(1,143,255,0.15)]" 
                                         : "bg-white text-[#003259] rounded-2xl rounded-tl-sm border border-gray-150 shadow-[0_2px_10px_rgba(0,0,0,0.02)]")}>
                                     
-                                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                                    <div>{renderMarkdown(msg.content, msg.role === 'user')}</div>
 
                                     {/* Render cited sources */}
                                     {msg.role === 'assistant' && msg.sources && msg.sources.length > 0 && (

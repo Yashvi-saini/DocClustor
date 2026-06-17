@@ -29,7 +29,7 @@ const sidebarItems: SidebarItem[] = [
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [showWorkspaceDropdown, setShowWorkspaceDropdown] = useState(false);
 
   const { workspaces, activeWorkspace, switchWorkspace, isLoading } = useWorkspace();
