@@ -8,6 +8,7 @@ import {
   Menu, 
   X 
 } from "lucide-react";
+import MagicBento from "../components/MagicBento";
 
 export default function Home() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -208,156 +209,8 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Bento Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-8">
-            
-            {/* CARD 1: Workspace-Aware RAG */}
-            <div className="md:col-span-4 flex flex-col justify-between overflow-hidden border border-white/10 rounded-2xl bg-[#003259] transition-all duration-300 hover:border-[#1E9BFF] hover:shadow-[0_0_30px_rgba(30,155,255,0.25)] hover:-translate-y-1 group p-8 md:p-10">
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center h-full">
-                
-                {/* Text Side */}
-                <div className="lg:col-span-5 flex flex-col justify-center text-left">
-                  <h3 className="text-xl font-bold text-white mb-3">
-                    Intelligent AI RAG Bot
-                  </h3>
-                  <p className="text-slate-300 text-xs leading-relaxed">
-                    Interact with your private data using our state-of-the-art Retrieval-Augmented Generation agent. Answers only grounded in your documents.
-                  </p>
-                </div>
-
-                {/* Screenshot Side */}
-                <div className="lg:col-span-7 w-full">
-                  <div className="bg-white rounded-xl p-4 border border-white/10 flex items-center justify-center aspect-[1.6] relative overflow-hidden shadow-md">
-                    <Image 
-                      src="/landing/rag-bot.png" 
-                      alt="AI RAG Bot chat application screenshot view" 
-                      fill 
-                      className="object-contain p-2 transition-transform duration-500 group-hover:scale-[1.03]" 
-                    />
-                  </div>
-                </div>
-
-              </div>
-            </div>
-
-            {/* CARD 2: PIN Security  */}
-            <div className="md:col-span-2 flex flex-col justify-between overflow-hidden border border-white/10 rounded-2xl bg-[#003259] transition-all duration-300 hover:border-[#1E9BFF] hover:shadow-[0_0_30px_rgba(30,155,255,0.25)] hover:-translate-y-1 group p-8 md:p-10 text-left">
-              <div>
-                <h3 className="text-xl font-bold text-white mb-3">
-                  Double-Locked PIN Security
-                </h3>
-                <p className="text-slate-300 text-xs leading-relaxed">
-                  Lock sensitive directories behind a physical-like secondary authentication screen verifying frontend access tokens instantly.
-                </p>
-              </div>
-              <div className="mt-8 w-full">
-                <div className="bg-white rounded-xl p-4 border border-white/10 flex items-center justify-center aspect-[1.6] relative overflow-hidden shadow-md">
-                  <Image 
-                    src="/landing/pinsecurity.png" 
-                    alt="PIN Panel authentication modal screenshot" 
-                    fill 
-                    className="object-contain p-2 transition-transform duration-500 group-hover:scale-[1.03]" 
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* CARD 3: Tenant Isolation (Col-span 2 - Stacked) */}
-            <div className="md:col-span-2 flex flex-col justify-between overflow-hidden border border-white/10 rounded-2xl bg-[#003259] transition-all duration-300 hover:border-[#1E9BFF] hover:shadow-[0_0_30px_rgba(30,155,255,0.25)] hover:-translate-y-1 group p-8 md:p-10 text-left">
-              <div>
-                <h3 className="text-xl font-bold text-white mb-3">
-                  Multi-Tenant Isolation
-                </h3>
-                <p className="text-slate-300 text-xs leading-relaxed">
-                  Each workspace is cryptographically isolated. Your data is never mixed with others, ensuring complete privacy even at the infrastructure level.
-                </p>
-              </div>
-              <div className="mt-8 w-full">
-                <div className="bg-white rounded-xl p-4 border border-white/10 flex items-center justify-center aspect-[1.6] relative overflow-hidden shadow-md">
-                  <Image 
-                    src="/landing/tenant_isolation.png" 
-                    alt="Multi-tenant backend data isolation screenshot" 
-                    fill 
-                    className="object-contain p-2 transition-transform duration-500 group-hover:scale-[1.03]" 
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* CARD 4: Granular Control (Col-span 4 - Side-by-side text/image) */}
-            <div className="md:col-span-4 flex flex-col justify-between overflow-hidden border border-white/10 rounded-2xl bg-[#003259] transition-all duration-300 hover:border-[#1E9BFF] hover:shadow-[0_0_30px_rgba(30,155,255,0.25)] hover:-translate-y-1 group p-8 md:p-10">
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center h-full">
-                
-                {/* Text Side */}
-                <div className="lg:col-span-5 flex flex-col justify-center text-left">
-                  <h3 className="text-xl font-bold text-white mb-3">
-                    Granular Permissions
-                  </h3>
-                  <p className="text-slate-300 text-xs leading-relaxed">
-                    Assign read, write, or admin permissions down to the individual document or team folder level. Instantly sync user roles.
-                  </p>
-                </div>
-
-                {/* Screenshot Side */}
-                <div className="lg:col-span-7 w-full">
-                  <div className="bg-white rounded-xl p-4 border border-white/10 flex items-center justify-center aspect-[1.6] relative overflow-hidden shadow-md">
-                    <Image 
-                      src="/landing/granular.png" 
-                      alt="Directory permissions control config screenshot" 
-                      fill 
-                      className="object-contain p-2 transition-transform duration-500 group-hover:scale-[1.03]" 
-                    />
-                  </div>
-                </div>
-
-              </div>
-            </div>
-
-            {/* CARD 5: Smart Workspace (Col-span 3 - Stacked) */}
-            <div className="md:col-span-3 flex flex-col justify-between overflow-hidden border border-white/10 rounded-2xl bg-[#003259] transition-all duration-300 hover:border-[#1E9BFF] hover:shadow-[0_0_30px_rgba(30,155,255,0.25)] hover:-translate-y-1 group p-8 md:p-10 text-left">
-              <div>
-                <h3 className="text-xl font-bold text-white mb-3">
-                  Workspace-Aware Architecture
-                </h3>
-                <p className="text-slate-300 text-xs leading-relaxed">
-                  Intelligent document clustering that understands your organizational hierarchy and maintains strict permission boundaries across all silos.
-                </p>
-              </div>
-              <div className="mt-8 w-full">
-                <div className="bg-white rounded-xl p-4 border border-white/10 flex items-center justify-center aspect-[1.6] relative overflow-hidden shadow-md">
-                  <Image 
-                    src="/landing/workspace_aware.png" 
-                    alt="Workspace awareness organization structure screenshot" 
-                    fill 
-                    className="object-contain p-2 transition-transform duration-500 group-hover:scale-[1.03]" 
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* CARD 6: Cryptographic Encryption (Col-span 3 - Stacked) */}
-            <div className="md:col-span-3 flex flex-col justify-between overflow-hidden border border-white/10 rounded-2xl bg-[#003259] transition-all duration-300 hover:border-[#1E9BFF] hover:shadow-[0_0_30px_rgba(30,155,255,0.25)] hover:-translate-y-1 group p-8 md:p-10 text-left">
-              <div>
-                <h3 className="text-xl font-bold text-white mb-3">
-                  Advanced Security Auditing
-                </h3>
-                <p className="text-slate-300 text-xs leading-relaxed">
-                  Real-time monitoring and immutable logs of every document access and AI query. Know exactly who saw what and when.
-                </p>
-              </div>
-              <div className="mt-8 w-full">
-                <div className="bg-white rounded-xl p-4 border border-white/10 flex items-center justify-center aspect-[1.6] relative overflow-hidden shadow-md">
-                  <Image 
-                    src="/landing/secure.png" 
-                    alt="Security and storage metrics screen layout screenshot" 
-                    fill 
-                    className="object-contain p-2 transition-transform duration-500 group-hover:scale-[1.03]" 
-                  />
-                </div>
-              </div>
-            </div>
-
-          </div>
+          {/* Magic Bento Grid */}
+          <MagicBento />
         </div>
       </section>
 
