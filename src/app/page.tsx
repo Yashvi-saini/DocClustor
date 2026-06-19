@@ -36,7 +36,7 @@ export default function Home() {
     
     const loaderTimer = setTimeout(() => {
       setIsLoading(false);
-    }, 6000);
+    }, 5000);
 
     return () => {
       window.removeEventListener("scroll", handleScroll);

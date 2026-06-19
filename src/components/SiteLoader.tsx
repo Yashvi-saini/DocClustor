@@ -7,12 +7,11 @@ export default function SiteLoader() {
   const [statusIndex, setStatusIndex] = useState(0);
 
   const statuses = [
-    "Establishing Secure Locker Enclave",
+    "Establishing Secure Doc-Clustor enclave",
     "Verifying Encrypted Credentials",
-    "Initializing Zero-Knowledge Vaults",
-    "Preparing Vector Index Pipelines",
+    "Initializing Doc-Clustor Vaults",
     "Optimizing Workspace Latency",
-    "Ready to Launch"
+    "Welcome to Doc-Clustor"
   ];
 
   useEffect(() => {
