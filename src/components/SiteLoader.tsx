@@ -1,14 +1,31 @@
 "use client";
 
-import React from "react";
-import { motion, Variants } from "framer-motion";
+import React, { useState, useEffect } from "react";
+import { motion, Variants, AnimatePresence } from "framer-motion";
 
 export default function SiteLoader() {
+  const [statusIndex, setStatusIndex] = useState(0);
 
-  const docWidth = 130;
-  const docHeight = 130;
+  const statuses = [
+    "Establishing Secure Locker Enclave",
+    "Verifying Encrypted Credentials",
+    "Initializing Zero-Knowledge Vaults",
+    "Preparing Vector Index Pipelines",
+    "Optimizing Workspace Latency",
+    "Ready to Launch"
+  ];
 
-  const animationDuration = 2.3;
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setStatusIndex((prev) => (prev + 1) % statuses.length);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const docWidth = 125;
+  const docHeight = 125;
+
+  const animationDuration = 3.0;
 
   const doc1Variants: Variants = {
     animate: {
@@ -202,6 +219,25 @@ export default function SiteLoader() {
           </svg>
         </motion.div>
 
+      </div>
+
+      {/* Dynamic Professional Status Text */}
+      <div className="absolute bottom-24 flex items-center justify-center px-6 h-6 w-full pointer-events-none">
+        {/* Text Transition Slide Fade */}
+        <div className="overflow-hidden relative h-5 w-[360px] text-center">
+          <AnimatePresence mode="wait">
+            <motion.span
+              key={statusIndex}
+              initial={{ y: 12, opacity: 0 }}
+              animate={{ y: 0, opacity: 0.6 }}
+              exit={{ y: -12, opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="absolute inset-x-0 font-sans text-[11px] font-bold tracking-[0.22em] uppercase text-[#003259] block whitespace-nowrap"
+            >
+              {statuses[statusIndex]}
+            </motion.span>
+          </AnimatePresence>
+        </div>
       </div>
 
     </div>
