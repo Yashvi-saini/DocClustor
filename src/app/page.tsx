@@ -405,8 +405,8 @@ export default function Home() {
               &copy; {new Date().getFullYear()} DocClustor. All rights reserved.
             </p>
             <div className="flex gap-6">
-              <span className="hover:text-[#1E9BFF] transition-colors text-xs cursor-pointer">Privacy Policy</span>
-              <span className="hover:text-[#1E9BFF] transition-colors text-xs cursor-pointer">Terms of Service</span>
+              <Link href="/privacy" className="hover:text-[#1E9BFF] transition-colors text-slate-400 text-xs cursor-pointer">Privacy Policy</Link>
+              <Link href="/terms" className="hover:text-[#1E9BFF] transition-colors text-slate-400 text-xs cursor-pointer">Terms of Service</Link>
             </div>
           </div>
 

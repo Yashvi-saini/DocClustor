@@ -34,11 +34,11 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://docclustor.me'),
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000',
+    url: process.env.NEXT_PUBLIC_BASE_URL || 'https://docclustor.me',
     title: "DocClustor - Document Management & Organization Platform",
     description: "DocClustor is a powerful document management and organization platform that helps you store, organize, and collaborate on documents efficiently.",
     siteName: "DocClustor",
@@ -64,6 +64,9 @@ export const metadata: Metadata = {
     apple: "/favicon.svg",
   },
   manifest: "/site.webmanifest",
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || undefined,
+  },
 };
 
 import { WorkspaceProvider } from "@/context/WorkspaceContext";

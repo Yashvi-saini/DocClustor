@@ -1,17 +1,30 @@
 import { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://docclustor.me';
 
     return {
         rules: [
             {
                 userAgent: '*',
-                allow: '/',
+                allow: [
+                    '/',
+                    '/privacy',
+                    '/terms',
+                ],
                 disallow: [
                     '/api/',
-                    '/dummydash/',
                     '/oauth/',
+                    '/login',
+                    '/signup',
+                    '/forgot-password',
+                    '/reset-password',
+                    '/verify',
+                    '/onboarding',
+                    '/dashboard/',
+                    '/company/',
+                    '/individual/',
+                    '/dummydash/',
                 ],
             },
         ],
