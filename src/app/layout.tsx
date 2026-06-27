@@ -34,11 +34,11 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://docclustor.me'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://docclustor.me'),
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: process.env.NEXT_PUBLIC_BASE_URL || 'https://docclustor.me',
+    url: process.env.NEXT_PUBLIC_APP_URL || 'https://docclustor.me',
     title: "DocClustor - Document Management & Organization Platform",
     description: "DocClustor is a powerful document management and organization platform that helps you store, organize, and collaborate on documents efficiently.",
     siteName: "DocClustor",
