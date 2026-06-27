@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/favicon.svg" width="80" alt="DocClustor Logo" />
+  <img src="public/favicon.svg"  width="80" alt="DocClustor Logo" />
 </p>
 
 <h1 align="center">DocClustor</h1>
