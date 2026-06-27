@@ -35,10 +35,13 @@ export const metadata: Metadata = {
     telephone: false,
   },
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://docclustor.me'),
+    alternates: {
+    canonical: "/",
+  },
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: process.env.NEXT_PUBLIC_APP_URL || 'https://docclustor.me',
+    url: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://docclustor.me'),
     title: "DocClustor - Document Management & Organization Platform",
     description: "DocClustor is a powerful document management and organization platform that helps you store, organize, and collaborate on documents efficiently.",
     siteName: "DocClustor",
@@ -59,9 +62,15 @@ export const metadata: Metadata = {
     creator: "@docclustor",
   },
   icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
-    apple: "/favicon.svg",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon-96x96.png", type: "image/png", sizes: "96x96" },
+      { url: "/favicon.svg", type: "image/svg+xml" }
+    ],
+    shortcut: "/favicon.ico",
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }
+    ],
   },
   manifest: "/site.webmanifest",
   verification: {
