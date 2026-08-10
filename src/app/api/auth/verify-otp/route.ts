@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyOtpInDb } from '@backend/services/otp.service';
+import { sanitizeAuthError } from '@backend/utils/errorSanitizer';
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,7 +27,7 @@ export async function POST(request: NextRequest) {
       message: 'Invalid or expired OTP. Please try again.',
     }, { status: 400 });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Verification failed';
+    const message = sanitizeAuthError(error, 'Verification failed');
     return NextResponse.json({
       success: false,
       message,

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAndSendOtp } from '@backend/services/otp.service';
+import { sanitizeAuthError } from '@backend/utils/errorSanitizer';
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,7 +20,7 @@ export async function POST(request: NextRequest) {
       message: 'OTP sent successfully to your email.',
     }, { status: 200 });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Failed to send OTP';
+    const message = sanitizeAuthError(error, 'Failed to send OTP');
     return NextResponse.json({
       success: false,
       message,

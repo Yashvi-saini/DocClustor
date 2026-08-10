@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { registerUser } from '@backend/services/auth.service';
+import { sanitizeAuthError } from '@backend/utils/errorSanitizer';
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,7 +26,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Registration failed';
+    const message = sanitizeAuthError(error, 'Registration failed');
     return NextResponse.json(
       { success: false, message },
       { status: 400 }

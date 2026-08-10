@@ -11,6 +11,7 @@ import { loginSchema, type LoginSchemaType } from "@/features/auth/schema/authSc
 import { authService } from "@/services/auth.service";
 import { toast } from "react-hot-toast";
 import FormSkeleton from "@/features/auth/forms/FormSkeleton";
+import { sanitizeAuthError } from "@backend/utils/errorSanitizer";
 
 type FormValues = LoginSchemaType;
 
@@ -33,13 +34,14 @@ export default function LoginForm() {
   });
   const emailValue = watch("email");
 
+  // Check for error in query string (e.g. from OAuth redirect), display error in form, and clean URL
   React.useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const urlError = params.get("error");
       if (urlError) {
-        setApiError(urlError);
-        toast.error(urlError);
+        const cleanMsg = sanitizeAuthError(urlError, "Authentication service unavailable.");
+        setApiError(cleanMsg);
         const cleanUrl = window.location.pathname;
         window.history.replaceState({}, document.title, cleanUrl);
       }
@@ -76,22 +78,20 @@ export default function LoginForm() {
         toast.success("Login Successful!");
         const user = response.data?.user;
         if (user?.profileComplete) {
-          // Returning user — go straight to dashboard
           router.push("/dashboard/home");
         } else {
-          // New user — needs to complete profile setup
           router.push("/onboarding");
         }
       } else {
-        const errorMsg = response.message || "Login failed. Please check your credentials.";
+        const rawMsg = response.message || "Login failed. Please check your credentials.";
+        const errorMsg = sanitizeAuthError(rawMsg, "Login failed. Please check your credentials.");
         setApiError(errorMsg);
-        toast.error(errorMsg);
       }
     } catch (error: any) {
       console.error("Login Error", error);
-      const errorMsg = error.message || "An error occurred during login.";
+      const rawMsg = error.message || "An error occurred during login.";
+      const errorMsg = sanitizeAuthError(rawMsg, "An error occurred during login.");
       setApiError(errorMsg);
-      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -167,12 +167,12 @@ export default function LoginForm() {
         </div>
 
         {apiError && (
-          <div className="w-full p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
+          <div className="w-full p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm text-center font-medium">
             {apiError}
           </div>
         )}
 
-        {/* Submit - Order last on mobile */}
+        {/* Submit */}
         <button
           type="submit"
           disabled={loading}

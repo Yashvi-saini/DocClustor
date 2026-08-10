@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { loginUser } from '@backend/services/auth.service';
+import { sanitizeAuthError } from '@backend/utils/errorSanitizer';
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Login failed';
+    const message = sanitizeAuthError(error, 'Login failed');
     return NextResponse.json(
       { success: false, message },
       { status: 400 }
