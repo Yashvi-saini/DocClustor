@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@backend/db/prisma';
 import * as jose from 'jose';
+import { sanitizeAuthError } from '@backend/utils/errorSanitizer';
 
 const JWT_SECRET = process.env.JWT_SECRET!;
 
@@ -11,7 +12,8 @@ export async function GET(request: NextRequest) {
   const BASE = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
   if (error || !code) {
-    return NextResponse.redirect(`${BASE}/login?error=${encodeURIComponent(error || 'No authorization code provided')}`);
+    const cleanErr = sanitizeAuthError(error || 'No authorization code provided');
+    return NextResponse.redirect(`${BASE}/login?error=${encodeURIComponent(cleanErr)}`);
   }
 
   try {
@@ -94,8 +96,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.redirect(`${BASE}/oauth/callback?tempOAuthToken=${encodeURIComponent(tempToken)}`);
   } catch (err) {
-    const msg = err instanceof Error ? err.message : 'GitHub authentication failed';
-    console.error('[GitHub Callback]', msg);
+    const msg = sanitizeAuthError(err, 'GitHub authentication failed');
+    console.error('[GitHub Callback Exception]', err);
     return NextResponse.redirect(`${BASE}/login?error=${encodeURIComponent(msg)}`);
   }
 }

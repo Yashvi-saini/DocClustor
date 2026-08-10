@@ -33,6 +33,19 @@ export default function LoginForm() {
   });
   const emailValue = watch("email");
 
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const urlError = params.get("error");
+      if (urlError) {
+        setApiError(urlError);
+        toast.error(urlError);
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+      }
+    }
+  }, []);
+
   // Simulate initial loading
   React.useEffect(() => {
     const timer = setTimeout(() => {
