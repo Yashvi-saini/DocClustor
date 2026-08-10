@@ -2,6 +2,7 @@ import { WorkspaceContext } from '../types/api.types';
 import { getDocuments } from './document.service';
 import { listWorkspaces } from './workspace.service';
 import { prisma } from '../db/prisma';
+const pdfParse = require('pdf-parse/lib/pdf-parse.js');
 
 export interface RagQueryInput {
   question: string;
@@ -30,11 +31,91 @@ function tokenize(text: string): string[] {
     .filter(token => token.length > 2 && !STOPWORDS.has(token));
 }
 
+async function extractTextContent(rawContent: string, title = ''): Promise<string> {
+  if (!rawContent) return '';
+
+  const isPdf = title.toLowerCase().endsWith('.pdf') || 
+                rawContent.includes('application/pdf') || 
+                rawContent.startsWith('JVBERi'); // '%PDF' in base64
+
+  if (rawContent.startsWith('data:') && rawContent.includes(';base64,')) {
+    try {
+      const [header, base64Data] = rawContent.split(';base64,');
+      const buffer = Buffer.from(base64Data, 'base64');
+
+      if (header.includes('pdf') || isPdf) {
+        const parsed = await pdfParse(buffer);
+        return parsed.text ? parsed.text.trim() : '';
+      } else {
+        const decoded = buffer.toString('utf-8');
+        return decoded.trim();
+      }
+    } catch (err) {
+      console.error('[RAG PDF Parse Error]', err);
+      return '';
+    }
+  } else if (rawContent.startsWith('JVBERi')) {
+    try {
+      const buffer = Buffer.from(rawContent, 'base64');
+      const parsed = await pdfParse(buffer);
+      return parsed.text ? parsed.text.trim() : '';
+    } catch (err) {
+      console.error('[RAG PDF Base64 Parse Error]', err);
+      return '';
+    }
+  }
+
+  return rawContent.trim();
+}
+
 interface Chunk {
   docId: string;
   docTitle: string;
   workspaceName: string;
   text: string;
+}
+
+async function callGemini(systemPrompt: string, userQuestion: string, apiKey: string): Promise<string | null> {
+  const models = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'];
+
+  for (const model of models) {
+    try {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [
+              {
+                role: 'user',
+                parts: [{ text: `${systemPrompt}\n\nUser Question: ${userQuestion}` }]
+              }
+            ],
+            generationConfig: {
+              temperature: 0.2,
+              maxOutputTokens: 1000
+            }
+          })
+        }
+      );
+
+      if (res.ok) {
+        const json = await res.json();
+        const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text && text.trim()) {
+          return text.trim();
+        }
+      } else {
+        const err = await res.text();
+        console.warn(`[RAG Service] Model ${model} returned HTTP ${res.status}: ${err}`);
+      }
+    } catch (err) {
+      console.warn(`[RAG Service] Call to model ${model} failed:`, err);
+    }
+  }
+
+  return null;
 }
 
 export async function queryRag(input: RagQueryInput): Promise<RagQueryOutput> {
@@ -55,16 +136,13 @@ export async function queryRag(input: RagQueryInput): Promise<RagQueryOutput> {
         ? { type: 'personal', userId }
         : { type: 'org', orgId: w.id, userId, memberRole: w.role || 'VIEWER' };
       
-      // Fetch document METADATA first (excludeContent = false for speed)
       const docs = await getDocuments(tempContext, false);
       eligibleDocs.push(...docs);
     }
   } else {
-    // Single workspace search
     const workspaces = await listWorkspaces(userId);
     workspaces.forEach(w => workspaceNames.set(w.id, w.name));
 
-    // Fetch document METADATA first (excludeContent = false for speed)
     const docs = await getDocuments(workspaceContext, false);
     eligibleDocs = docs;
   }
@@ -78,17 +156,14 @@ export async function queryRag(input: RagQueryInput): Promise<RagQueryOutput> {
       }
     }
 
-
     if (doc.mimeType && (
       doc.mimeType.startsWith('image/') ||
       doc.mimeType.startsWith('audio/') ||
-      doc.mimeType.startsWith('video/') ||
-      doc.mimeType === 'application/octet-stream'
+      doc.mimeType.startsWith('video/')
     )) {
       return false;
     }
 
-    // Check filename extension
     const titleLower = doc.title.toLowerCase();
     if (
       titleLower.endsWith('.png') ||
@@ -105,7 +180,7 @@ export async function queryRag(input: RagQueryInput): Promise<RagQueryOutput> {
     return true;
   });
 
-  // If we have documents, fetch their content and build chunks
+  // 2. Fetch document content and extract text using pdf-parse
   const allChunks: Chunk[] = [];
   if (targetDocs.length > 0) {
     const docsWithContent = await prisma.document.findMany({
@@ -117,16 +192,15 @@ export async function queryRag(input: RagQueryInput): Promise<RagQueryOutput> {
     docsWithContent.forEach(d => contentMap.set(d.id, d.content || ''));
 
     for (const doc of targetDocs) {
-      const content = contentMap.get(doc.id) || '';
+      const rawContent = contentMap.get(doc.id) || '';
+      const textContent = await extractTextContent(rawContent, doc.title);
 
-      if (content.startsWith('data:') && content.includes(';base64,')) {
-        continue;
-      }
+      if (!textContent) continue;
 
-      const words = content.split(/\s+/);
-      const chunkSize = 120; // ~500 chars
+      const words = textContent.split(/\s+/);
+      const chunkSize = 150; // ~600 chars
       const overlap = 30;
-      const workspaceName = workspaceNames.get(doc.orgId || doc.userId || '') || 'Unknown Space';
+      const workspaceName = workspaceNames.get(doc.orgId || doc.userId || '') || 'Workspace';
 
       for (let i = 0; i < words.length; i += (chunkSize - overlap)) {
         const chunkText = words.slice(i, i + chunkSize).join(' ');
@@ -143,57 +217,24 @@ export async function queryRag(input: RagQueryInput): Promise<RagQueryOutput> {
     }
   }
 
+  // If no document chunks exist in workspace
   if (allChunks.length === 0) {
     if (apiKey) {
-      try {
-        const systemPrompt = `You are DocCluster Assistant, a highly secure, professional AI. The user has not uploaded any readable text documents in this workspace context yet. Answer the user's question using your general knowledge. At the end of your response, gently and politely mention that they can upload text files (.txt, .md, .pdf) in their workspace to let you answer questions directly from their documents.`;
-        
-        const geminiRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [
-                {
-                  role: 'user',
-                  parts: [{ text: `${systemPrompt}\n\nUser Question: ${question}` }]
-                }
-              ],
-              generationConfig: {
-                temperature: 0.5,
-                maxOutputTokens: 800
-              }
-            })
-          }
-        );
-
-        if (geminiRes.ok) {
-          const resJson = await geminiRes.json();
-          const answer = resJson.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (answer) {
-            return {
-              answer: answer.trim(),
-              sources: []
-            };
-          }
-        } else {
-          const errText = await geminiRes.text();
-          console.error(`[RAG Service] Gemini API returned error status ${geminiRes.status}:`, errText);
-        }
-      } catch (err) {
-        console.error("Gemini general chat failed:", err);
+      const systemPrompt = `You are DocCluster Assistant, a highly secure, professional AI. The user has not uploaded any readable text documents in this workspace context yet. Answer the user's question using your general knowledge. At the end of your response, gently and politely mention that they can upload text files (.txt, .md, .pdf) in their workspace to let you answer questions directly from their documents.`;
+      
+      const answer = await callGemini(systemPrompt, question, apiKey);
+      if (answer) {
+        return { answer, sources: [] };
       }
     }
 
-    // Fallback if no API key is configured
     return {
-      answer: `Hello! I don't see any text documents uploaded in your workspace context yet. Please upload a text document (.txt, .md, .pdf) using the paperclip button below to start querying your custom data.\n\n*(Note: To enable general conversational chat when no files are present, please configure your GEMINI_API_KEY in the environment variables)*`,
+      answer: `Hello! I don't see any text documents uploaded in your active workspace context yet. Please upload a text document (.txt, .md, .pdf) using the paperclip button below to start querying your custom data.`,
       sources: []
     };
   }
 
-  // 4. Score chunks using lightweight TF-IDF logic
+  // 3. TF-IDF Chunk Ranking
   const queryTokens = tokenize(question);
   if (queryTokens.length === 0) {
     queryTokens.push(...question.toLowerCase().split(/\s+/).filter(t => t.length > 0));
@@ -238,11 +279,14 @@ export async function queryRag(input: RagQueryInput): Promise<RagQueryOutput> {
     return { chunk, score };
   });
 
-  // Sort chunks by TF-IDF relevance
-  const topScored = scoredChunks
+  let topScored = scoredChunks
     .filter(item => item.score > 0)
     .sort((a, b) => b.score - a.score)
-    .slice(0, 4);
+    .slice(0, 5);
+
+  if (topScored.length === 0) {
+    topScored = scoredChunks.slice(0, 5);
+  }
 
   const finalSources = topScored.map(item => ({
     documentId: item.chunk.docId,
@@ -251,78 +295,35 @@ export async function queryRag(input: RagQueryInput): Promise<RagQueryOutput> {
     workspaceName: item.chunk.workspaceName
   }));
 
-  // 5. Synthesis & LLM integration
+  // 4. LLM Synthesis via Gemini
   if (apiKey) {
-    try {
-      const contextText = topScored
-        .map(item => `[Source: ${item.chunk.docTitle} (${item.chunk.workspaceName})] ${item.chunk.text}`)
-        .join('\n\n');
+    const contextText = topScored
+      .map(item => `[Document: "${item.chunk.docTitle}" | Workspace: ${item.chunk.workspaceName}]\n${item.chunk.text}`)
+      .join('\n\n---\n\n');
 
-      const systemPrompt = `You are DocCluster Assistant, a highly secure, professional AI. Answer the user's question using ONLY the provided document context below. If the answer cannot be found in the context, say that the information is not present in the uploaded documents. Do not make up facts. Cite your sources when answering.
+    const systemPrompt = `You are DocCluster Assistant, an enterprise AI document assistant. Answer the user's question concisely and accurately using ONLY the provided document context below. If the answer cannot be found in the context, clearly state that the information is not present in the uploaded documents. Cite the document names when answering.
 
 Context:
 ${contextText}`;
 
-      const geminiRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [
-              {
-                role: 'user',
-                parts: [
-                  { text: `${systemPrompt}\n\nUser Question: ${question}` }
-                ]
-              }
-            ],
-            generationConfig: {
-              temperature: 0.2,
-              maxOutputTokens: 800
-            }
-          })
-        }
-      );
-
-      if (geminiRes.ok) {
-        const resJson = await geminiRes.json();
-        const answer = resJson.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (answer) {
-          return {
-            answer: answer.trim(),
-            sources: finalSources
-          };
-        }
-      } else {
-        const errText = await geminiRes.text();
-        console.error(`[RAG Service] Gemini API returned error status during synthesis ${geminiRes.status}:`, errText);
-      }
-    } catch (apiErr) {
-      console.error('Gemini API call failed with exception:', apiErr);
+    const answer = await callGemini(systemPrompt, question, apiKey);
+    if (answer) {
+      return {
+        answer,
+        sources: finalSources
+      };
     }
   }
 
-  if (topScored.length === 0) {
-    return {
-      answer: "No relevant documents or matches found in your active workspace context. Please try rephrasing your question or upload documents containing matching keywords.",
-      sources: []
-    };
-  }
-
-  // Build a sophisticated local synthesis
-  const intro = `Here is what I found in your documents regarding "${question}":\n\n`;
+  const intro = `Here is the relevant information found in your workspace documents regarding "${question}":\n\n`;
   const body = topScored.map((item, idx) => {
     const textSnippet = item.chunk.text.trim();
-    // Trim leading/trailing punctuation nicely
-    const cleanSnippet = textSnippet.length > 200 ? textSnippet.substring(0, 200) + '...' : textSnippet;
-    return `${idx + 1}. **From "${item.chunk.docTitle}" [${item.chunk.workspaceName}]**:\n   > "... ${cleanSnippet} ..."`;
+    const cleanSnippet = textSnippet.length > 220 ? textSnippet.substring(0, 220) + '...' : textSnippet;
+    return `${idx + 1}. **From "${item.chunk.docTitle}" (${item.chunk.workspaceName})**:\n   > "${cleanSnippet}"`;
   }).join('\n\n');
 
-  const apiKeyWarning = `\n\n*(Note: Gemini API key is missing from .env, using local high-fidelity semantic matching context fallback)*`;
-
   return {
-    answer: intro + body + apiKeyWarning,
+    answer: intro + body,
     sources: finalSources
   };
 }
