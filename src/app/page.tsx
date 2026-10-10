@@ -108,21 +108,21 @@ function Floating({
 }
 
 function HeroBackdrop() {
-  const shadow = "drop-shadow-[0_18px_30px_rgba(0,50,89,0.12)]";
+  const shadow = "";
   return (
     <div className="absolute inset-0 overflow-hidden" aria-hidden>
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,#ffffff_30%,#EEF4FB_100%)]" />
 
-      <Floating className="-left-10 top-24 w-40 md:w-52" rotate={-12} delay={0.1}>
+      <Floating className="-left-8 top-20 w-28 sm:w-40 md:w-52" rotate={-12} delay={0.1}>
         <DocSheet className={`w-full ${shadow}`} />
       </Floating>
-      <Floating className="-right-8 top-20 w-40 md:w-56" rotate={10} delay={0.2}>
+      <Floating className="-right-6 top-24 w-28 sm:w-40 md:w-56" rotate={10} delay={0.2}>
         <DocSheet accent="#003259" className={`w-full ${shadow}`} />
       </Floating>
-      <Floating className="left-[4%] bottom-10 w-24 md:w-32" rotate={-6} delay={0.3}>
+      <Floating className="left-[4%] bottom-24 sm:bottom-10 w-16 sm:w-24 md:w-32" rotate={-6} delay={0.3}>
         <FolderIcon className={`w-full ${shadow}`} />
       </Floating>
-      <Floating className="right-[3%] bottom-12 w-36 md:w-44" rotate={7} delay={0.35}>
+      <Floating className="right-[3%] bottom-24 sm:bottom-12 w-24 sm:w-36 md:w-44" rotate={7} delay={0.35}>
         <DocSheet className={`w-full ${shadow}`} />
       </Floating>
       <Floating className="left-[16%] top-[58%] hidden md:block w-24" rotate={8} delay={0.5}>
@@ -168,14 +168,14 @@ export default function Home() {
         <Link
           href="/"
           aria-label="DocClustor home"
-          className="fixed left-4 top-4 z-50 flex h-12 w-12 items-center justify-center rounded-full border-2 border-[#1E9BFF] bg-white shadow-md transition-transform hover:scale-105"
+          className="fixed left-3 top-3 sm:left-4 sm:top-4 z-50 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full border-2 border-[#1E9BFF] bg-white shadow-md transition-transform hover:scale-105"
         >
           <div className="relative h-6 w-6">
             <Image src="/logo(1).svg" alt="DocClustor Logo" fill className="object-contain" priority />
           </div>
         </Link>
 
-        <nav className="fixed left-4 top-1/2 z-50 flex -translate-y-1/2 flex-col gap-3">
+        <nav className="fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 flex-row gap-2 rounded-2xl border border-slate-200 bg-white/90 p-2 shadow-lg backdrop-blur sm:bottom-auto sm:left-4 sm:top-1/2 sm:-translate-x-0 sm:-translate-y-1/2 sm:flex-col sm:gap-3 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none">
           {navLinks.map((link) => {
             const Icon = link.icon;
             return (
@@ -186,7 +186,7 @@ export default function Home() {
                 className="group relative flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200/80 bg-white/80 text-slate-500 shadow-sm backdrop-blur transition-all hover:-translate-y-0.5 hover:bg-[#003259] hover:text-white"
               >
                 <Icon className="h-[18px] w-[18px]" />
-                <span className="pointer-events-none absolute left-14 whitespace-nowrap rounded-lg bg-[#003259] px-2.5 py-1 text-xs font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">
+                <span className="pointer-events-none absolute left-14 hidden sm:block whitespace-nowrap rounded-lg bg-[#003259] px-2.5 py-1 text-xs font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">
                   {link.name}
                 </span>
               </a>
@@ -194,20 +194,20 @@ export default function Home() {
           })}
         </nav>
 
-        <div className="fixed right-4 top-4 z-50 flex items-center gap-2 font-poppins">
-          <Link href="/login" className="rounded-xl border border-[#003259]/20 bg-white/80 px-5 py-2.5 text-sm font-bold text-[#003259] backdrop-blur transition-colors hover:bg-[#003259]/5">
+        <div className="fixed right-3 top-3 sm:right-4 sm:top-4 z-50 flex items-center gap-1.5 sm:gap-2 font-poppins">
+          <Link href="/login" className="rounded-xl border border-[#003259]/20 bg-white/80 px-3 py-2 text-xs sm:px-5 sm:py-2.5 sm:text-sm font-bold text-[#003259] backdrop-blur transition-colors hover:bg-[#003259]/5">
             Log In
           </Link>
-          <Link href="/signup" className="rounded-xl bg-[#1E9BFF] px-5 py-2.5 text-sm font-bold text-[#003259] shadow-md transition-colors hover:bg-[#1E9BFF]/90">
+          <Link href="/signup" className="rounded-xl bg-[#1E9BFF] px-3 py-2 text-xs sm:px-5 sm:py-2.5 sm:text-sm font-bold text-[#003259] shadow-md transition-colors hover:bg-[#1E9BFF]/90">
             Sign Up Now
           </Link>
         </div>
 
         <main>
-          <section className="relative flex min-h-screen items-center justify-center px-6 pt-24 pb-28 lg:pt-0">
+          <section className="relative flex min-h-[100svh] items-center justify-center px-5 sm:px-6 pt-24 pb-28 lg:pt-0">
             <HeroBackdrop />
             <div className="relative z-10 mx-auto max-w-3xl text-center flex flex-col items-center">
-              <h1 className=" text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-[#003259] leading-[1.1]">
+              <h1 className="text-[2rem] sm:text-5xl md:text-6xl font-extrabold tracking-tight text-[#003259] leading-[1.1]">
                 The smarter way to <span className="text-[#1E9BFF]">search your documents</span>
               </h1>
               <p className="mt-6 max-w-xl text-base md:text-lg text-slate-500 leading-relaxed">
@@ -217,11 +217,11 @@ export default function Home() {
             </div>
           </section>
 
-          <section id="capabilities" className="relative bg-white px-6 pt-10 pb-24 md:px-10">
+          <section id="capabilities" className="relative bg-white px-4 sm:px-6 pt-10 pb-20 md:pb-24 md:px-10">
             <div className="mx-auto max-w-5xl">
-              <div className="mb-14 max-w-2xl">
+              <div className="mb-10 md:mb-14 max-w-2xl">
                 <p className="text-xs font-bold uppercase tracking-widest text-[#1E9BFF]">Capabilities</p>
-                <h2 className="mt-3 text-3xl md:text-5xl font-extrabold tracking-tight text-[#003259] leading-tight">
+                <h2 className="mt-3 text-2xl sm:text-3xl md:text-5xl font-extrabold tracking-tight text-[#003259] leading-tight">
                   Everything your team needs, stacked in one place
                 </h2>
               </div>
@@ -230,11 +230,11 @@ export default function Home() {
                 {features.map((f, i) => (
                   <div
                     key={f.title}
-                    className="sticky"
-                    style={{ top: `${5 + i * 1.25}rem` }}
+                    className="sticky top-[calc(4.5rem+var(--i)*0.75rem)] md:top-[calc(5rem+var(--i)*1.25rem)]"
+                    style={{ "--i": i } as React.CSSProperties}
                   >
                     <div
-                      className={`${f.bg} grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 items-center rounded-3xl border border-slate-200 p-6 md:p-10 shadow-[0_20px_50px_-20px_rgba(0,50,89,0.25)]`}
+                      className={`${f.bg} grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-10 items-center rounded-2xl md:rounded-3xl border border-slate-200 p-4 sm:p-6 md:p-10 shadow-[0_20px_50px_-20px_rgba(0,50,89,0.25)]`}
                     >
                       <div>
                         <span className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#1E9BFF]">
@@ -243,10 +243,10 @@ export default function Home() {
                           </span>
                           {f.tag}
                         </span>
-                        <h3 className="mt-4 text-2xl md:text-3xl font-bold text-[#003259] leading-tight">{f.title}</h3>
+                        <h3 className="mt-3 md:mt-4 text-xl sm:text-2xl md:text-3xl font-bold text-[#003259] leading-tight">{f.title}</h3>
                         <p className="mt-3 text-sm md:text-base text-slate-500 leading-relaxed">{f.body}</p>
                       </div>
-                      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+                      <div className="relative aspect-[16/10] md:aspect-[4/3] w-full overflow-hidden rounded-xl md:rounded-2xl border border-slate-200 bg-slate-50">
                         <Image src={f.img} alt={f.title} fill sizes="(min-width: 768px) 40vw, 90vw" className="object-cover" />
                       </div>
                     </div>
@@ -256,12 +256,12 @@ export default function Home() {
             </div>
           </section>
 
-          <section id="security" className="bg-[#F1F7FF] px-6 py-24 md:px-10">
+          <section id="security" className="bg-[#F1F7FF] px-5 sm:px-6 py-16 md:py-24 md:px-10">
             <div className="mx-auto max-w-5xl">
-              <h2 className="text-3xl font-extrabold text-[#003259] tracking-tight max-w-xl">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#003259] tracking-tight max-w-xl">
                 Enterprise architecture. Compliant standards.
               </h2>
-              <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="mt-8 md:mt-12 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
                 {[
                   { icon: Layers, stat: "100%", title: "Data Segregation", body: "Queries run inside isolated tables. No model is cross-trained on multi-tenant document directories." },
                   { icon: Search, stat: "<100ms", title: "Query Retrieval Latency", body: "Optimized vector indexes and local credential checks happen before any AI engine is queried." },
@@ -278,9 +278,9 @@ export default function Home() {
             </div>
           </section>
 
-          <footer className="relative overflow-hidden bg-[#003259] px-6 pt-14 md:px-10 text-white">
+          <footer className="relative overflow-hidden bg-[#003259] px-5 sm:px-6 pt-12 md:pt-14 pb-0 md:px-10 text-white">
             <div className="relative z-10 mx-auto max-w-6xl">
-              <div className="grid grid-cols-2 gap-10 md:grid-cols-4">
+              <div className="grid grid-cols-2 gap-8 sm:gap-10 md:grid-cols-4">
                 {[
                   { title: "Company", links: [{ n: "About us" }, { n: "Careers" }, { n: "FAQs" }, { n: "Contact" }] },
                   { title: "Product", links: [{ n: "Capabilities", h: "#capabilities" }, { n: "Document Locker", h: "#capabilities" }, { n: "RAG Assistant", h: "#capabilities" }, { n: "Workspaces", h: "#capabilities" }] },
@@ -306,7 +306,7 @@ export default function Home() {
                 ))}
               </div>
 
-              <div className="mt-12 flex flex-col gap-6 border-t border-white/15 pt-6 md:flex-row md:items-start md:justify-between">
+              <div className="mt-10 md:mt-12 flex flex-col gap-6 border-t border-white/15 pt-6 md:flex-row md:items-start md:justify-between">
                 <div className="text-xs font-medium leading-relaxed text-white/80">
                   <p>DocClustor &mdash; secure document intelligence for teams.</p>
                   <p className="mt-3">&copy; {new Date().getFullYear()} DocClustor. All rights reserved.</p>
@@ -316,7 +316,7 @@ export default function Home() {
 
             <div
               aria-hidden
-              className="pointer-events-none select-none text-center font-extrabold leading-[0.8] tracking-tight text-[22vw] md:text-[17rem] mt-6 -mb-[0.12em] bg-gradient-to-b from-white/25 to-transparent bg-clip-text text-transparent"
+              className="pointer-events-none select-none text-center font-extrabold leading-[0.8] tracking-tight whitespace-nowrap text-[14vw] mt-6 -mb-[0.1em] bg-gradient-to-b from-white/25 to-transparent bg-clip-text text-transparent"
             >
               DocClustor
             </div>
