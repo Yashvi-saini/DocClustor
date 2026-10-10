@@ -273,19 +273,19 @@ org-rag/
 
 | Landing Page | Login / Signup |
 |:---:|:---:|
-| ![Landing Page](image-6.png) | ![Auth](image-7.png) |
+| ![Landing Page](docs/image/image-6.png) | ![Auth](docs/image/image-7.png) |
 
 | Dashboard Home | Document Management |
 |:---:|:---:|
-| ![Dashboard](image.png) | ![Documents](image-1.png) |
+| ![Dashboard](docs/image/image.png) | ![Documents](docs/image/image-1.png) |
 
 | RAG Chat Bot | Zero-Knowledge Locker |
 |:---:|:---:|
-| ![RAG Bot](image-3.png) | ![Locker](image-4.png) |
+| ![RAG Bot](docs/image/image-3.png) | ![Locker](docs/image/image-4.png) |
 
 | Organization Settings |
 |:---:|
-| ![Settings](image-5.png) |
+| ![Settings](docs/image/image-5.png) |
 
 ---
 

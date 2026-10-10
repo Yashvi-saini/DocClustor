@@ -4,44 +4,145 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Menu,
-  X
-} from "lucide-react";
-import MagicBento from "../components/MagicBento";
+import { Home as HomeIcon, Rocket, Lock, Search, ShieldCheck, Layers } from "lucide-react";
 import SiteLoader from "../components/SiteLoader";
 
 const navLinks = [
-  { name: "Capabilities", href: "#capabilities" },
-  { name: "Security Standards", href: "#security" },
-  { name: "Pricing", href: "#pricing" },
+  { name: "Overview", href: "#top", icon: HomeIcon },
+  { name: "Capabilities", href: "#capabilities", icon: Layers },
+  { name: "Security Standards", href: "#security", icon: ShieldCheck },
+  { name: "Get Started", href: "/signup", icon: Rocket },
 ];
 
+const features = [
+  {
+    tag: "Workspaces",
+    title: "Workspace-aware by design",
+    body: "Every organization gets its own isolated workspace. Members, documents and conversations stay inside the boundary you define.",
+    img: "/landing/workspace_aware.png",
+    bg: "bg-white",
+  },
+  {
+    tag: "RAG Assistant",
+    title: "Ask your documents anything",
+    body: "Retrieval-augmented answers grounded in your own files, with every response scoped to what the asking member is allowed to see.",
+    img: "/landing/rag-bot.png",
+    bg: "bg-[#F1F7FF]",
+  },
+  {
+    tag: "Isolation",
+    title: "Tenant isolation, end to end",
+    body: "Prompts, embeddings and storage are segregated per tenant. No model is ever cross-trained on another organization's documents.",
+    img: "/landing/tenant_isolation.png",
+    bg: "bg-white",
+  },
+  {
+    tag: "Locker",
+    title: "A PIN-protected document locker",
+    body: "Move your most sensitive files behind a second factor. Locked documents stay encrypted at rest until the PIN is verified.",
+    img: "/landing/pinsecurity.png",
+    bg: "bg-[#F1F7FF]",
+  },
+  {
+    tag: "Access control",
+    title: "Granular permissions",
+    body: "Invite members, assign roles and review audit logs so you always know who opened, searched or shared what.",
+    img: "/landing/granular.png",
+    bg: "bg-white",
+  },
+];
+
+
+function DocSheet({ className = "", accent = "#3B82F6" }: { className?: string; accent?: string }) {
+  return (
+    <svg viewBox="0 0 120 150" className={className} fill="none" aria-hidden>
+      <rect x="2" y="2" width="116" height="146" rx="10" fill="#fff" stroke="#DCE6F2" strokeWidth="2" />
+      <rect x="16" y="18" width="34" height="8" rx="4" fill={accent} opacity=".9" />
+      <rect x="16" y="40" width="88" height="5" rx="2.5" fill="#E3EBF5" />
+      <rect x="16" y="54" width="76" height="5" rx="2.5" fill="#E3EBF5" />
+      <rect x="16" y="68" width="84" height="5" rx="2.5" fill="#E3EBF5" />
+      <rect x="16" y="82" width="52" height="5" rx="2.5" fill="#E3EBF5" />
+      <rect x="16" y="106" width="88" height="26" rx="6" fill="#F1F7FF" />
+      <rect x="24" y="115" width="40" height="5" rx="2.5" fill={accent} opacity=".4" />
+    </svg>
+  );
+}
+
+function FolderIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 120 96" className={className} fill="none" aria-hidden>
+      <path d="M6 20a8 8 0 0 1 8-8h28l10 12h54a8 8 0 0 1 8 8v52a8 8 0 0 1-8 8H14a8 8 0 0 1-8-8V20Z" fill="#1E9BFF" opacity=".25" />
+      <path d="M6 34a8 8 0 0 1 8-8h92a8 8 0 0 1 8 8v46a8 8 0 0 1-8 8H14a8 8 0 0 1-8-8V34Z" fill="#3B82F6" />
+      <rect x="18" y="56" width="40" height="6" rx="3" fill="#fff" opacity=".7" />
+    </svg>
+  );
+}
+
+function Floating({
+  children,
+  className,
+  rotate = 0,
+  delay = 0,
+  amp = 10,
+}: {
+  children: React.ReactNode;
+  className: string;
+  rotate?: number;
+  delay?: number;
+  amp?: number;
+}) {
+  return (
+    <motion.div
+      className={`absolute pointer-events-none select-none ${className}`}
+      initial={{ opacity: 0, scale: 0.9, rotate }}
+      animate={{ opacity: 1, scale: 1, rotate, y: [0, -amp, 0] }}
+      transition={{
+        opacity: { duration: 0.8, delay },
+        scale: { duration: 0.8, delay },
+        y: { duration: 6 + delay * 2, repeat: Infinity, ease: "easeInOut", delay },
+      }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function HeroBackdrop() {
+  const shadow = "drop-shadow-[0_18px_30px_rgba(0,50,89,0.12)]";
+  return (
+    <div className="absolute inset-0 overflow-hidden" aria-hidden>
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,#ffffff_30%,#EEF4FB_100%)]" />
+
+      <Floating className="-left-10 top-24 w-40 md:w-52" rotate={-12} delay={0.1}>
+        <DocSheet className={`w-full ${shadow}`} />
+      </Floating>
+      <Floating className="-right-8 top-20 w-40 md:w-56" rotate={10} delay={0.2}>
+        <DocSheet accent="#003259" className={`w-full ${shadow}`} />
+      </Floating>
+      <Floating className="left-[4%] bottom-10 w-24 md:w-32" rotate={-6} delay={0.3}>
+        <FolderIcon className={`w-full ${shadow}`} />
+      </Floating>
+      <Floating className="right-[3%] bottom-12 w-36 md:w-44" rotate={7} delay={0.35}>
+        <DocSheet className={`w-full ${shadow}`} />
+      </Floating>
+      <Floating className="left-[16%] top-[58%] hidden md:block w-24" rotate={8} delay={0.5}>
+        <DocSheet accent="#1E9BFF" className={`w-full ${shadow}`} />
+      </Floating>
+      <Floating className="right-[18%] top-[12%] hidden md:block w-24" rotate={-8} delay={0.6}>
+        <DocSheet accent="#3B82F6" className={`w-full ${shadow}`} />
+      </Floating>
+
+      <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-white to-transparent" />
+    </div>
+  );
+}
+
 export default function Home() {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 40) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
-    };
-    window.addEventListener("scroll", handleScroll);
-    handleScroll(); // Check initially
-    
-    const loaderTimer = setTimeout(() => {
-      setIsLoading(false);
-    }, 5000);
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      clearTimeout(loaderTimer);
-    };
+    const loaderTimer = setTimeout(() => setIsLoading(false), 5000);
+    return () => clearTimeout(loaderTimer);
   }, []);
 
   return (
@@ -60,360 +161,168 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      <div className="min-h-screen bg-white text-slate-900 font-poppins selection:bg-[#1E9BFF]/20 selection:text-[#003259]">
-
-      {/* 1. GLASSMORPHISM STICKY NAVBAR */}
-      <div className="fixed top-0 inset-x-0 z-50 pointer-events-none flex justify-center p-0 md:p-2 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]">
-        <header 
-          className={`
-            w-full transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-auto
-            ${isScrolled 
-              ? "max-w-4xl bg-white/80 border border-slate-200/80 shadow-[0_16px_32px_-10px_rgba(0,50,89,0.1)] rounded-full backdrop-blur-md px-6 py-2.5 mt-2" 
-              : "max-w-7xl bg-white/40 border-b border-transparent backdrop-blur-none px-6 md:px-8 py-5"
-            }
-          `}
+      <div
+        id="top"
+        className="min-h-screen bg-white text-slate-900 font-poppins selection:bg-[#1E9BFF]/20 selection:text-[#003259]"
+      >
+        <Link
+          href="/"
+          aria-label="DocClustor home"
+          className="fixed left-4 top-4 z-50 flex h-12 w-12 items-center justify-center rounded-full border-2 border-[#1E9BFF] bg-white shadow-md transition-transform hover:scale-105"
         >
-          <div className="flex items-center justify-between">
-
-            {/* Logo Area */}
-            <Link href="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
-              <div className={`relative shrink-0 transition-all duration-500 ${isScrolled ? "w-7 h-7" : "w-8 h-8"}`}>
-                <Image 
-                  src="/logo(1).svg" 
-                  alt="DocClustor Logo" 
-                  fill 
-                  className="object-contain" 
-                  priority 
-                />
-              </div>
-              <div className={`relative shrink-0 transition-all duration-500 ${isScrolled ? "w-24 h-5" : "w-28 h-6"}`}>
-                <Image 
-                  src="/DocClustor.svg" 
-                  alt="DocClustor Logo Text" 
-                  fill 
-                  className="object-contain" 
-                  priority 
-                />
-              </div>
-            </Link>
-
-          {/* Navigation Links */}
-            <nav className="hidden md:flex items-center gap-1 relative">
-              {navLinks.map((link, idx) => (
-                <a
-                  key={idx}
-                  href={link.href}
-                  className={`
-                    relative px-4 py-2 text-xs font-semibold tracking-wide transition-colors duration-300 rounded-full
-                    ${isScrolled ? "text-slate-600 hover:text-[#003259]" : "text-slate-500 hover:text-[#003259]"}
-                  `}
-                  onMouseEnter={() => setHoveredIndex(idx)}
-                  onMouseLeave={() => setHoveredIndex(null)}
-                >
-                  <span className="relative z-10">{link.name}</span>
-                  {hoveredIndex === idx && (
-                    <motion.span
-                      layoutId="navbar-hover-pill"
-                      className="absolute inset-0 bg-slate-100 rounded-full z-0"
-                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                    />
-                  )}
-                </a>
-              ))}
-            </nav>
-
-            {/* Action Buttons */}
-            <div className="hidden md:flex items-center gap-3">
-              <Link 
-                href="/login" 
-                className={`
-                  font-semibold transition-colors duration-300
-                  ${isScrolled ? "text-xs text-slate-600 hover:text-[#003259]" : "text-sm text-slate-500 hover:text-[#003259]"}
-                `}
-              >
-                Log In
-              </Link>
-              <Link 
-                href="/signup" 
-                className={`
-                  inline-flex items-center justify-center font-bold text-white bg-[#003259] hover:bg-[#002440] transition-all duration-300 rounded-full shadow-sm active:scale-[0.98]
-                  ${isScrolled ? "px-5 py-2 text-xs h-9" : "px-6 py-2.5 text-sm h-11"}
-                `}
-              >
-                Sign Up Free
-              </Link>
-            </div>
-
-            {/* Mobile Menu Button */}
-            <button 
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="flex md:hidden p-2 text-slate-600 hover:text-[#003259] transition-colors focus:outline-none"
-              aria-label="Toggle Menu"
-            >
-              {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-            </button>
-
+          <div className="relative h-6 w-6">
+            <Image src="/logo(1).svg" alt="DocClustor Logo" fill className="object-contain" priority />
           </div>
-        </header>
-      </div>
+        </Link>
 
-      {/* Mobile Drawer */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div 
-            initial={{ opacity: 0, y: -15 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -15 }}
-            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed inset-x-0 top-[76px] z-40 border-b border-slate-200 bg-white shadow-xl md:hidden p-6 flex flex-col gap-4 rounded-b-2xl"
-          >
-            {navLinks.map((link, idx) => (
-              <a 
-                key={idx}
-                href={link.href} 
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="text-sm font-semibold text-slate-600 hover:text-[#003259] py-2 border-b border-slate-100 transition-colors"
+        <nav className="fixed left-4 top-1/2 z-50 flex -translate-y-1/2 flex-col gap-3">
+          {navLinks.map((link) => {
+            const Icon = link.icon;
+            return (
+              <a
+                key={link.name}
+                href={link.href}
+                aria-label={link.name}
+                className="group relative flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200/80 bg-white/80 text-slate-500 shadow-sm backdrop-blur transition-all hover:-translate-y-0.5 hover:bg-[#003259] hover:text-white"
               >
-                {link.name}
+                <Icon className="h-[18px] w-[18px]" />
+                <span className="pointer-events-none absolute left-14 whitespace-nowrap rounded-lg bg-[#003259] px-2.5 py-1 text-xs font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">
+                  {link.name}
+                </span>
               </a>
-            ))}
-            <div className="flex flex-col gap-3 pt-3">
-              <Link 
-                href="/login" 
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="w-full text-center py-2.5 text-sm font-semibold text-slate-600 border border-slate-200 rounded-full transition-colors"
-              >
-                Log In
-              </Link>
-              <Link 
-                href="/signup" 
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="w-full text-center py-2.5 text-sm font-bold text-white bg-[#003259] rounded-full transition-colors"
-              >
-                Sign Up Free
-              </Link>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            );
+          })}
+        </nav>
 
+        <div className="fixed right-4 top-4 z-50 flex items-center gap-2 font-poppins">
+          <Link href="/login" className="rounded-xl border border-[#003259]/20 bg-white/80 px-5 py-2.5 text-sm font-bold text-[#003259] backdrop-blur transition-colors hover:bg-[#003259]/5">
+            Log In
+          </Link>
+          <Link href="/signup" className="rounded-xl bg-[#1E9BFF] px-5 py-2.5 text-sm font-bold text-[#003259] shadow-md transition-colors hover:bg-[#1E9BFF]/90">
+            Sign Up Now
+          </Link>
+        </div>
 
-      {/* 2. HERO SECTION - SPLIT LAYOUT */}
-      <section className="relative overflow-hidden pt-12 pb-20 md:pt-20 md:pb-28 bg-white">
-        <div className="mx-auto max-w-7xl px-6 md:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
-
-            {/* Left side text and actions */}
-            <div className="lg:col-span-6 text-left flex flex-col items-start">
-
-              <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-[#003259] leading-[1.15] font-poppins">
-                Secure Workspace-Aware <br />
-                <span className="text-[#1E9BFF]">RAG & Document Locker</span>
+        <main>
+          <section className="relative flex min-h-screen items-center justify-center px-6 pt-24 pb-28 lg:pt-0">
+            <HeroBackdrop />
+            <div className="relative z-10 mx-auto max-w-3xl text-center flex flex-col items-center">
+              <h1 className=" text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-[#003259] leading-[1.1]">
+                The smarter way to <span className="text-[#1E9BFF]">search your documents</span>
               </h1>
-
-              <p className="mt-6 text-base md:text-lg text-slate-500 leading-relaxed font-normal max-w-xl">
-                A high performance workspace for sensitive data. Leverage the power of Retrieval Augmented Generation without compromising privacy or security.
+              <p className="mt-6 max-w-xl text-base md:text-lg text-slate-500 leading-relaxed">
+                A secure workspace for sensitive data. Use retrieval-augmented answers without compromising privacy or access control.
               </p>
 
-              {/* CTAs */}
-              <div className="mt-8 flex flex-row items-center gap-4 w-full sm:w-auto">
-                <Link
-                  href="/signup"
-                  className="px-6 py-3.5 text-sm font-bold text-white bg-[#003259] hover:bg-[#002440] transition-colors rounded-lg shadow-sm"
-                >
-                  Create Vault
-                </Link>
-                <a
-                  href="#capabilities"
-                  className="px-6 py-3.5 text-sm font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 transition-colors rounded-lg"
-                >
-                  Watch Demo
-                </a>
+            </div>
+          </section>
+
+          <section id="capabilities" className="relative bg-white px-6 pt-10 pb-24 md:px-10">
+            <div className="mx-auto max-w-5xl">
+              <div className="mb-14 max-w-2xl">
+                <p className="text-xs font-bold uppercase tracking-widest text-[#1E9BFF]">Capabilities</p>
+                <h2 className="mt-3 text-3xl md:text-5xl font-extrabold tracking-tight text-[#003259] leading-tight">
+                  Everything your team needs, stacked in one place
+                </h2>
               </div>
 
+              <div className="flex flex-col gap-6">
+                {features.map((f, i) => (
+                  <div
+                    key={f.title}
+                    className="sticky"
+                    style={{ top: `${5 + i * 1.25}rem` }}
+                  >
+                    <div
+                      className={`${f.bg} grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 items-center rounded-3xl border border-slate-200 p-6 md:p-10 shadow-[0_20px_50px_-20px_rgba(0,50,89,0.25)]`}
+                    >
+                      <div>
+                        <span className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#1E9BFF]">
+                          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#003259] text-white text-[10px]">
+                            {i + 1}
+                          </span>
+                          {f.tag}
+                        </span>
+                        <h3 className="mt-4 text-2xl md:text-3xl font-bold text-[#003259] leading-tight">{f.title}</h3>
+                        <p className="mt-3 text-sm md:text-base text-slate-500 leading-relaxed">{f.body}</p>
+                      </div>
+                      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+                        <Image src={f.img} alt={f.title} fill sizes="(min-width: 768px) 40vw, 90vw" className="object-cover" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
+          </section>
 
-            {/* Right side illustration - CLIP PATH INSET ANIMATION */}
-            <div className="lg:col-span-6 w-full">
-              <motion.div
-                initial={{ clipPath: "inset(10% 10% 10% 10% round 24px)", opacity: 0 }}
-                animate={{ clipPath: "inset(0% 0% 0% 0% round 16px)", opacity: 1 }}
-                transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-                className="relative overflow-hidden bg-slate-50 border border-slate-200 rounded-2xl shadow-lg p-2"
-              >
-                <div className="relative aspect-[4/3] w-full">
-                  <Image
-                    src="/landing/hero.png"
-                    alt="DocClustor Workspace Platform Interface Layout"
-                    fill
-                    className="object-cover rounded-xl"
-                    priority
-                  />
-                </div>
-              </motion.div>
+          <section id="security" className="bg-[#F1F7FF] px-6 py-24 md:px-10">
+            <div className="mx-auto max-w-5xl">
+              <h2 className="text-3xl font-extrabold text-[#003259] tracking-tight max-w-xl">
+                Enterprise architecture. Compliant standards.
+              </h2>
+              <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+                {[
+                  { icon: Layers, stat: "100%", title: "Data Segregation", body: "Queries run inside isolated tables. No model is cross-trained on multi-tenant document directories." },
+                  { icon: Search, stat: "<100ms", title: "Query Retrieval Latency", body: "Optimized vector indexes and local credential checks happen before any AI engine is queried." },
+                  { icon: Lock, stat: "AES-256", title: "Storage Protection", body: "Documents are encrypted at rest, with secondary PIN verification for the locker." },
+                ].map(({ icon: Icon, stat, title, body }) => (
+                  <div key={title} className="rounded-2xl border border-slate-200 bg-white p-7">
+                    <Icon className="w-5 h-5 text-[#1E9BFF]" />
+                    <div className="mt-4 text-4xl font-extrabold text-[#003259]">{stat}</div>
+                    <h3 className="mt-2 font-bold text-sm text-[#003259]">{title}</h3>
+                    <p className="mt-2 text-xs text-slate-500 leading-relaxed">{body}</p>
+                  </div>
+                ))}
+              </div>
             </div>
+          </section>
 
-          </div>
-        </div>
-      </section>
+          <footer className="relative overflow-hidden bg-[#003259] px-6 pt-14 md:px-10 text-white">
+            <div className="relative z-10 mx-auto max-w-6xl">
+              <div className="grid grid-cols-2 gap-10 md:grid-cols-4">
+                {[
+                  { title: "Company", links: [{ n: "About us" }, { n: "Careers" }, { n: "FAQs" }, { n: "Contact" }] },
+                  { title: "Product", links: [{ n: "Capabilities", h: "#capabilities" }, { n: "Document Locker", h: "#capabilities" }, { n: "RAG Assistant", h: "#capabilities" }, { n: "Workspaces", h: "#capabilities" }] },
+                  { title: "Resources", links: [{ n: "Documentation" }, { n: "Security", h: "#security" }, { n: "Changelog" }] },
+                  { title: "Legal", links: [{ n: "Privacy Policy", h: "/privacy" }, { n: "Terms of Service", h: "/terms" }, { n: "Security Standards", h: "#security" }, { n: "Cookies" }] },
+                ].map((col) => (
+                  <div key={col.title}>
+                    <h4 className="mb-4 text-xs font-bold uppercase tracking-wider text-white">{col.title}</h4>
+                    <ul className="space-y-3">
+                      {col.links.map((l) => (
+                        <li key={l.n}>
+                          {!l.h ? (
+                            <span className="text-xs text-white/60">{l.n}</span>
+                          ) : l.h.startsWith("/") ? (
+                            <Link href={l.h} className="text-xs text-white/70 transition-colors hover:text-white">{l.n}</Link>
+                          ) : (
+                            <a href={l.h} className="text-xs text-white/70 transition-colors hover:text-white">{l.n}</a>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
 
-
-      {/* 3. BENTO GRID CAPABILITIES SECTION - SLEEK DARK BACKDROP */}
-      <section id="capabilities" className="py-24 md:py-32 bg-[#00172B] text-white">
-        <div className="mx-auto max-w-7xl px-6 md:px-8">
-
-          {/* Section Header */}
-          <div className="max-w-3xl mb-16 md:mb-20 text-left">
-            <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight leading-tight">
-              Capabilities
-            </h2>
-            <p className="mt-4 text-slate-400 text-sm md:text-base leading-relaxed max-w-2xl">
-              Explore our core technical architecture designed to secure your team knowledge. Leverage private retrieval-augmented intelligence under strict access control boundaries.
-            </p>
-          </div>
-
-          {/* Magic Bento Grid */}
-          <MagicBento />
-        </div>
-      </section>
-
-
-      {/* 4. SECURITY STANDARDS */}
-      <section id="security" className="py-24 bg-white">
-        <div className="mx-auto max-w-7xl px-6 md:px-8">
-          <div className="max-w-3xl mx-auto text-center mb-16">
-
-            <p className="text-3xl font-extrabold text-[#003259] tracking-tight">
-              Enterprise architecture. Compliant standards.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="p-8 border border-slate-100 rounded-2xl bg-slate-50/50 hover:bg-slate-50 transition-colors text-left">
-              <div className="text-4xl font-extrabold text-[#003259] mb-2">100%</div>
-              <h3 className="font-bold text-sm text-[#003259] mb-2">Data Segregation</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Prompt isolation guarantees user queries are structured purely within isolated tables. No models are cross-trained using multi-tenant document directories.
-              </p>
-            </div>
-            <div className="p-8 border border-slate-100 rounded-2xl bg-slate-50/50 hover:bg-slate-50 transition-colors text-left">
-              <div className="text-4xl font-extrabold text-[#003259] mb-2">&lt;100ms</div>
-              <h3 className="font-bold text-sm text-[#003259] mb-2">Query Retrieval Latency</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Intelligent caching systems and highly optimized vector store indexes verify credentials locally prior to querying AI engines.
-              </p>
-            </div>
-            <div className="p-8 border border-slate-100 rounded-2xl bg-slate-50/50 hover:bg-slate-50 transition-colors text-left">
-              <div className="text-4xl font-extrabold text-[#003259] mb-2">AES-256</div>
-              <h3 className="font-bold text-sm text-[#003259] mb-2">Storage Protection</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Cryptographic salts and double-factor decryption tokens secure document buffers at rest, verifying secondary PIN panels securely.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-
-      {/* 5. CALL TO ACTION SECTION */}
-      <section id="pricing" className="bg-[#003259] text-white py-20 relative overflow-hidden">
-        <div className="mx-auto max-w-7xl px-6 md:px-8 relative z-10 flex flex-col md:flex-row items-center justify-between gap-10">
-          <div className="max-w-xl text-left">
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4 text-white">
-              Ready to secure your company knowledge?
-            </h2>
-            <p className="text-slate-300 text-sm md:text-base leading-relaxed">
-              Create an isolated organization workspace, drag and drop documents, and let your team query assets with confidence under complete permission guardrails.
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-4 shrink-0 w-full md:w-auto">
-            <Link
-              href="/signup"
-              className="w-full sm:w-auto text-center px-8 py-4 text-sm font-bold text-[#003259] bg-[#1E9BFF] hover:bg-[#1E9BFF]/90 transition-colors rounded-xl shadow-md"
-            >
-              Sign Up Now
-            </Link>
-            <Link
-              href="/login"
-              className="w-full sm:w-auto text-center px-8 py-4 text-sm font-bold text-white bg-transparent hover:bg-white/10 border border-white/20 transition-colors rounded-xl"
-            >
-              Log In
-            </Link>
-          </div>
-        </div>
-      </section>
-
-
-      {/* 6. CLEAN & PROFESSIONAL FOOTER */}
-      <footer className="bg-white border-t border-slate-200 py-16 md:py-20 text-slate-500 text-sm">
-        <div className="mx-auto max-w-7xl px-6 md:px-8">
-
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-10 md:gap-8 mb-16">
-
-            {/* Brand Block */}
-            <div className="col-span-2 text-left">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="relative w-8 h-8 shrink-0">
-                  <Image src="/logo(1).svg" alt="DocClustor Logo" fill className="object-contain" />
-                </div>
-                <div className="relative w-24 h-5 shrink-0">
-                  <Image src="/DocClustor.svg" alt="DocClustor Logo Text" fill className="object-contain" />
+              <div className="mt-12 flex flex-col gap-6 border-t border-white/15 pt-6 md:flex-row md:items-start md:justify-between">
+                <div className="text-xs font-medium leading-relaxed text-white/80">
+                  <p>DocClustor &mdash; secure document intelligence for teams.</p>
+                  <p className="mt-3">&copy; {new Date().getFullYear()} DocClustor. All rights reserved.</p>
                 </div>
               </div>
-              <p className="text-slate-400 text-xs leading-relaxed max-w-xs">
-                A secure document intelligence platform that allows organization workspaces to store, search, and chat safely. Built with zero-knowledge architecture.
-              </p>
             </div>
 
-            {/* Links Block 1: Product */}
-            <div className="text-left">
-              <h4 className="font-bold text-[#003259] text-xs uppercase tracking-wider mb-4">Product</h4>
-              <ul className="space-y-3">
-                <li><a href="#capabilities" className="hover:text-[#1E9BFF] transition-colors text-xs">Capabilities</a></li>
-                <li><Link href="/login" className="hover:text-[#1E9BFF] transition-colors text-xs">Platform Login</Link></li>
-                <li><Link href="/signup" className="hover:text-[#1E9BFF] transition-colors text-xs">Create Workspace</Link></li>
-              </ul>
+            <div
+              aria-hidden
+              className="pointer-events-none select-none text-center font-extrabold leading-[0.8] tracking-tight text-[22vw] md:text-[17rem] mt-6 -mb-[0.12em] bg-gradient-to-b from-white/25 to-transparent bg-clip-text text-transparent"
+            >
+              DocClustor
             </div>
-
-            {/* Links Block 2: Security */}
-            <div className="text-left">
-              <h4 className="font-bold text-[#003259] text-xs uppercase tracking-wider mb-4">Security</h4>
-              <ul className="space-y-3">
-                <li><a href="#security" className="hover:text-[#1E9BFF] transition-colors text-xs">Tenant Isolation</a></li>
-                <li><a href="#security" className="hover:text-[#1E9BFF] transition-colors text-xs">PIN Locker Specs</a></li>
-                <li><a href="#security" className="hover:text-[#1E9BFF] transition-colors text-xs">AES-256 Storage</a></li>
-                <li><a href="#security" className="hover:text-[#1E9BFF] transition-colors text-xs">GDPR Compliance</a></li>
-              </ul>
-            </div>
-
-            {/* Links Block 3: Company */}
-            <div className="text-left">
-              <h4 className="font-bold text-[#003259] text-xs uppercase tracking-wider mb-4">Company</h4>
-              <ul className="space-y-3">
-                <li><span className="text-slate-400 text-xs cursor-default">About Us</span></li>
-                <li><span className="text-slate-400 text-xs cursor-default">Careers</span></li>
-                <li><span className="text-slate-400 text-xs cursor-default">Press Kit</span></li>
-                <li><span className="text-slate-400 text-xs cursor-default">Contact</span></li>
-              </ul>
-            </div>
-
-          </div>
-
-          {/* Bottom Bar */}
-          <div className="pt-8 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-slate-400 text-xs">
-              &copy; {new Date().getFullYear()} DocClustor. All rights reserved.
-            </p>
-            <div className="flex gap-6">
-              <Link href="/privacy" className="hover:text-[#1E9BFF] transition-colors text-slate-400 text-xs cursor-pointer">Privacy Policy</Link>
-              <Link href="/terms" className="hover:text-[#1E9BFF] transition-colors text-slate-400 text-xs cursor-pointer">Terms of Service</Link>
-            </div>
-          </div>
-
-        </div>
-      </footer>
-
-    </div>
+          </footer>
+        </main>
+      </div>
     </>
   );
 }
