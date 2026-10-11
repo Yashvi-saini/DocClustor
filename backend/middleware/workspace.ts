@@ -22,8 +22,8 @@ export async function requireWorkspace(request: NextRequest): Promise<WorkspaceC
   }
 
   if (workspaceHeader.startsWith('org:')) {
-    const orgId = workspaceHeader.split(':')[1];
-    if (!orgId) {
+    const orgId = workspaceHeader.slice(4);
+    if (!orgId || orgId.length > 64) {
       const err = new Error('Invalid workspace organization header format');
       (err as any).status = 400;
       throw err;
@@ -68,12 +68,24 @@ export async function requireWorkspace(request: NextRequest): Promise<WorkspaceC
   throw err;
 }
 
+const AUTH_ERRORS = new Set(['No authentication token found', 'Invalid or expired token']);
+
 export function handleWorkspaceError(error: any) {
-  const status = error.status || 500;
-  const message = error.message || 'An unexpected server error occurred';
-  
-  return NextResponse.json(
-    { success: false, message },
-    { status }
-  );
+  const message = error instanceof Error ? error.message : '';
+  if (AUTH_ERRORS.has(message)) {
+    return NextResponse.json(
+      { success: false, message: 'Unauthorized. Please log in.' },
+      { status: 401 }
+    );
+  }
+
+  const status = typeof error?.status === 'number' ? error.status : 500;
+  if (status >= 500) {
+    console.error('[Workspace Error]', error);
+    return NextResponse.json(
+      { success: false, message: 'An unexpected server error occurred' },
+      { status: 500 }
+    );
+  }
+  return NextResponse.json({ success: false, message }, { status });
 }

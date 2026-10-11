@@ -19,7 +19,12 @@ const transporter = SMTP_USER && SMTP_PASS && SMTP_PASS !== '' && SMTP_PASS !== 
   : null;
 
 export async function sendOtpEmail(email: string, otp: string, purpose: string): Promise<boolean> {
-  const purposeText = purpose === 'register' ? 'verify your DocClustor account' : 'complete your secure login';
+  const purposeTexts: Record<string, string> = {
+    register: 'verify your DocClustor account',
+    forgot: 'reset your DocClustor password',
+    reset_locker_pin: 'reset your DocClustor locker PIN',
+  };
+  const purposeText = purposeTexts[purpose] || 'complete your secure login';
   
   const htmlContent = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f9fafb; padding: 40px 20px; text-align: center;">

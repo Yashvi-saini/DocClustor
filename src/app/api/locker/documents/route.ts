@@ -1,24 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireWorkspace, handleWorkspaceError } from '@backend/middleware/workspace';
 import { getLocker, lockDocument, unlockDocument } from '@backend/services/locker.service';
+import { canAccessDocument } from '@backend/services/document.service';
+import { isLockerUnlocked, workspaceIdOf } from '@backend/utils/session';
 
-
- // Helper to check if the locker session is currently unlocked.
-
-function verifySessionUnlocked(request: NextRequest, workspaceId: string): boolean {
-  const cookieName = `locker_session_${workspaceId}`;
-  return request.cookies.get(cookieName)?.value === 'unlocked';
-}
-
-// GET /api/locker/documents
 export async function GET(request: NextRequest) {
   try {
     const workspaceContext = await requireWorkspace(request);
-    const workspaceId = workspaceContext.type === 'personal'
-      ? workspaceContext.userId
-      : workspaceContext.orgId;
 
-    if (!verifySessionUnlocked(request, workspaceId)) {
+    if (!(await isLockerUnlocked(request, workspaceContext.userId, workspaceIdOf(workspaceContext)))) {
       return NextResponse.json(
         { success: false, message: 'Locker is locked. Please unlock first.' },
         { status: 403 }
@@ -26,7 +16,11 @@ export async function GET(request: NextRequest) {
     }
 
     const locker = await getLocker(workspaceContext);
-    const documents = locker ? locker.documents : [];
+    const documents = (locker ? locker.documents : [])
+      .filter((doc) => canAccessDocument(workspaceContext, doc))
+      .map(({ id, title, type, fileUrl, fileSize, createdAt }) => ({
+        id, title, type, fileUrl, fileSize, createdAt,
+      }));
 
     return NextResponse.json({
       success: true,
@@ -38,8 +32,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/locker/documents
-// Move a standard document into the locker.
 export async function POST(request: NextRequest) {
   try {
     const workspaceContext = await requireWorkspace(request);
@@ -64,7 +56,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// DELETE /api/locker/documents
 export async function DELETE(request: NextRequest) {
   try {
     const workspaceContext = await requireWorkspace(request);
@@ -75,6 +66,13 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json(
         { success: false, message: 'documentId query parameter is required' },
         { status: 400 }
+      );
+    }
+
+    if (!(await isLockerUnlocked(request, workspaceContext.userId, workspaceIdOf(workspaceContext)))) {
+      return NextResponse.json(
+        { success: false, message: 'Locker is locked. Please unlock first.' },
+        { status: 403 }
       );
     }
 

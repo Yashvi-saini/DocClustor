@@ -215,6 +215,10 @@ export function ChatInterface() {
         body: JSON.stringify({
           question: questionText,
           searchAllWorkspaces,
+          history: messages
+            .filter((m) => !/^(⏳|📎|❌|Sorry, I encountered)/.test(m.content))
+            .slice(-6)
+            .map((m) => ({ role: m.role, content: m.content })),
         }),
       });
 
@@ -259,8 +263,7 @@ export function ChatInterface() {
   const getFileType = (fileName: string): string => {
     const ext = fileName.split('.').pop()?.toLowerCase();
     if (ext === 'pdf') return 'PDF';
-    if (ext === 'doc' || ext === 'docx') return 'WORD';
-    if (ext === 'xls' || ext === 'xlsx') return 'EXCEL';
+    if (ext === 'doc' || ext === 'docx') return 'DOCX';
     if (ext === 'png' || ext === 'jpg' || ext === 'jpeg' || ext === 'gif') return 'IMAGE';
     return 'TEXT';
   };

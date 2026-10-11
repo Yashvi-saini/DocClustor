@@ -1,20 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { resetUserPassword } from '@backend/services/auth.service';
 import { sanitizeAuthError } from '@backend/utils/errorSanitizer';
+import { readResetSession, RESET_COOKIE } from '@backend/utils/session';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json();
+    const { password } = await request.json();
 
-    if (!email || !password) {
+    if (!password || typeof password !== 'string' || password.length < 8 || password.length > 128) {
       return NextResponse.json({
         success: false,
-        message: 'Email and password are required',
+        message: 'Password must be between 8 and 128 characters',
       }, { status: 400 });
     }
 
-    const resetAuthorizedCookie = request.cookies.get('reset_authorized')?.value;
-    if (resetAuthorizedCookie !== 'true') {
+    const email = await readResetSession(request);
+    if (!email) {
       return NextResponse.json({
         success: false,
         message: 'Reset request unauthorized or expired. Please complete the OTP check again.',
@@ -28,7 +29,7 @@ export async function POST(request: NextRequest) {
       message: 'Password reset successful.',
     }, { status: 200 });
 
-    response.cookies.delete('reset_authorized');
+    response.cookies.set(RESET_COOKIE, '', { httpOnly: true, path: '/', maxAge: 0 });
 
     return response;
   } catch (error: unknown) {

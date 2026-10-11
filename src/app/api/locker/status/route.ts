@@ -1,19 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireWorkspace, handleWorkspaceError } from '@backend/middleware/workspace';
 import { getLocker } from '@backend/services/locker.service';
+import { isLockerUnlocked, workspaceIdOf } from '@backend/utils/session';
 
-// GET /api/locker/status
 export async function GET(request: NextRequest) {
   try {
     const workspaceContext = await requireWorkspace(request);
     const locker = await getLocker(workspaceContext);
 
-    const workspaceId = workspaceContext.type === 'personal'
-      ? workspaceContext.userId
-      : workspaceContext.orgId;
-
-    const cookieName = `locker_session_${workspaceId}`;
-    const isSessionUnlocked = request.cookies.get(cookieName)?.value === 'unlocked';
+    const isSessionUnlocked = await isLockerUnlocked(
+      request,
+      workspaceContext.userId,
+      workspaceIdOf(workspaceContext)
+    );
 
     if (!locker) {
       return NextResponse.json({

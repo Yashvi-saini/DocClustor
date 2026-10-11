@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireWorkspace, handleWorkspaceError } from '@backend/middleware/workspace';
 import { createAndSendOtp } from '@backend/services/otp.service';
+import { assertCanManageLocker } from '@backend/services/locker.service';
 import { prisma } from '@backend/db/prisma';
 
 export async function POST(request: NextRequest) {
   try {
     const workspaceContext = await requireWorkspace(request);
+    assertCanManageLocker(workspaceContext);
+
     const user = await prisma.user.findUnique({
       where: { id: workspaceContext.userId },
       select: { email: true },

@@ -22,5 +22,15 @@ export async function GET(request: NextRequest) {
     `&access_type=offline` +
     `&prompt=consent`;
 
-  return NextResponse.redirect(googleAuthUrl);
+  const state = crypto.randomUUID();
+  const response = NextResponse.redirect(`${googleAuthUrl}&state=${state}`);
+  response.cookies.set('oauth_state', state, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 600,
+  });
+  return response;
+
 }

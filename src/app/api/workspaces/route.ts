@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth, unauthorized } from '@backend/middleware/auth.middleware';
+import { requireAuth, handleAuthError } from '@backend/middleware/auth.middleware';
 import { listWorkspaces, createOrganisation } from '@backend/services/workspace.service';
 
 //GET /api/workspaces
@@ -15,14 +15,7 @@ export async function GET(request: NextRequest) {
       data: { workspaces },
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Failed to list workspaces';
-    if (message === 'No authentication token found' || message === 'Invalid or expired token') {
-      return unauthorized();
-    }
-    return NextResponse.json(
-      { success: false, message },
-      { status: 500 }
-    );
+    return handleAuthError(error);
   }
 }
 
@@ -41,12 +34,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const str = (v: unknown, max: number) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, max) : undefined);
+
     const org = await createOrganisation(jwt.userId, {
-      name,
-      cin,
-      gstin,
-      industry,
-      logo,
+      name: name.trim().slice(0, 120),
+      cin: str(cin, 40),
+      gstin: str(gstin, 40),
+      industry: str(industry, 80),
+      logo: str(logo, 2048),
     });
 
     return NextResponse.json({
@@ -55,13 +50,6 @@ export async function POST(request: NextRequest) {
       data: { organisation: org },
     }, { status: 201 });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Failed to create organization';
-    if (message === 'No authentication token found' || message === 'Invalid or expired token') {
-      return unauthorized();
-    }
-    return NextResponse.json(
-      { success: false, message },
-      { status: 500 }
-    );
+    return handleAuthError(error);
   }
 }

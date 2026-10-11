@@ -1,15 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@backend/db/prisma';
-import * as jose from 'jose';
+import { createOAuthTempToken } from '@backend/utils/session';
 import { sanitizeAuthError } from '@backend/utils/errorSanitizer';
-
-const JWT_SECRET = process.env.JWT_SECRET!;
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const code = searchParams.get('code');
   const error = searchParams.get('error');
   const BASE = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+
+  const state = searchParams.get('state');
+  const expectedState = request.cookies.get('oauth_state')?.value;
+  if (!error && (!state || !expectedState || state !== expectedState)) {
+    return NextResponse.redirect(`${BASE}/login?error=${encodeURIComponent('Invalid sign-in request. Please try again.')}`);
+  }
 
   if (error || !code) {
     const cleanErr = sanitizeAuthError(error || 'No authorization code provided');
@@ -60,12 +64,21 @@ export async function GET(request: NextRequest) {
       const emailsRes = await fetch('https://api.github.com/user/emails', { headers: authHeaders });
       if (emailsRes.ok) {
         const emails: Array<{ email: string; primary: boolean; verified: boolean }> = await emailsRes.json();
-        const primary = emails.find(e => e.primary && e.verified) || emails[0];
+        const primary = emails.find(e => e.primary && e.verified) || emails.find(e => e.verified);
         if (primary) email = primary.email;
       }
     }
 
     if (!email) throw new Error('No verified email found on this GitHub account');
+
+
+    const existing = await prisma.user.findUnique({ where: { email }, select: { emailVerified: true } });
+    if (existing && !existing.emailVerified) {
+      await prisma.user.update({
+        where: { email },
+        data: { emailVerified: true, password: null, tokenVersion: { increment: 1 } },
+      });
+    }
 
     // 4. Find-or-create user (lean select projection)
     let user = await prisma.user.findUnique({
@@ -87,14 +100,11 @@ export async function GET(request: NextRequest) {
     }
 
     // 5. Issue short-lived temp JWT (5 min)
-    const secret = new TextEncoder().encode(JWT_SECRET);
-    const tempToken = await new jose.SignJWT({ userId: user.id, email: user.email })
-      .setProtectedHeader({ alg: 'HS256' })
-      .setIssuedAt()
-      .setExpirationTime('5m')
-      .sign(secret);
+    const tempToken = await createOAuthTempToken(user.id, user.email);
 
-    return NextResponse.redirect(`${BASE}/oauth/callback?tempOAuthToken=${encodeURIComponent(tempToken)}`);
+    const done = NextResponse.redirect(`${BASE}/oauth/callback?tempOAuthToken=${encodeURIComponent(tempToken)}`);
+    done.cookies.set('oauth_state', '', { path: '/', maxAge: 0 });
+    return done;
   } catch (err) {
     const msg = sanitizeAuthError(err, 'GitHub authentication failed');
     console.error('[GitHub Callback Exception]', err);

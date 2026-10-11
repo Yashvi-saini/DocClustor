@@ -19,5 +19,15 @@ export async function GET(request: NextRequest) {
     `&redirect_uri=${encodeURIComponent(redirectUri)}` +
     `&scope=user:email`;
 
-  return NextResponse.redirect(githubAuthUrl);
+  const state = crypto.randomUUID();
+  const response = NextResponse.redirect(`${githubAuthUrl}&state=${state}`);
+  response.cookies.set('oauth_state', state, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 600,
+  });
+  return response;
+
 }

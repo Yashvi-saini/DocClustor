@@ -22,7 +22,7 @@ const createPrismaClient = () => {
 
   const config = parse(connectionString) as any;
   config.ssl = {
-    rejectUnauthorized: false
+    rejectUnauthorized: process.env.DATABASE_SSL_STRICT === 'true',
   };
 
   const pool = new pg.Pool(config);

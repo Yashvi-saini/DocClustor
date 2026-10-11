@@ -66,7 +66,7 @@ class AuthService {
         return response;
     }
 
-    async sendOtp(purpose: 'register' | 'login', email: string): Promise<SuccessResponse> {
+    async sendOtp(purpose: 'register' | 'login' | 'forgot', email: string): Promise<SuccessResponse> {
         return this.request<SuccessResponse>(`/auth/send-otp`, {
             method: 'POST',
             body: JSON.stringify({ email, purpose })
@@ -127,7 +127,7 @@ class AuthService {
     async logout() {
         try {
             await fetch('/api/auth/logout', { method: 'POST' });
-            const cookieNames = ['token', 'accessToken', 'refreshToken', 'connect.sid', 'reset_authorized', 'is_authenticated'];
+            const cookieNames = ['token', 'accessToken', 'refreshToken', 'connect.sid', 'is_authenticated'];
 
             cookieNames.forEach(name => {
                 document.cookie = `${name}=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
@@ -139,11 +139,6 @@ class AuthService {
             console.error("Logout Error", error);
         }
 
-        return { success: true };
-    }
-
-    async setResetAuthorizedCookie() {
-        this.setCookie('reset_authorized', 'true', 300);
         return { success: true };
     }
 }

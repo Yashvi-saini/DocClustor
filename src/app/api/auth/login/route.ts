@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { loginUser } from '@backend/services/auth.service';
 import { sanitizeAuthError } from '@backend/utils/errorSanitizer';
+import { rateLimit, clientIp } from '@backend/utils/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,10 +10,19 @@ export async function POST(request: NextRequest) {
     const resolvedEmail = email || emailOrPhoneOrUsername;
 
     // Basic validation
-    if (!resolvedEmail || !password) {
+    if (!resolvedEmail || !password || typeof resolvedEmail !== 'string' || typeof password !== 'string') {
       return NextResponse.json(
         { success: false, message: 'Email and password are required' },
         { status: 400 }
+      );
+    }
+
+    const limitIp = rateLimit(`login:ip:${clientIp(request)}`, 30, 10 * 60_000);
+    const limitAcct = rateLimit(`login:acct:${resolvedEmail.toLowerCase()}`, 8, 10 * 60_000);
+    if (!limitIp.ok || !limitAcct.ok) {
+      return NextResponse.json(
+        { success: false, message: 'Too many login attempts. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': String(Math.max(limitIp.retryAfterSec, limitAcct.retryAfterSec)) } }
       );
     }
 

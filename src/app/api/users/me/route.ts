@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth, unauthorized } from '@backend/middleware/auth.middleware';
+import { requireAuth, handleAuthError } from '@backend/middleware/auth.middleware';
 import { getUserById } from '@backend/services/user.service';
 import { updateProfile } from '@backend/services/profile.service';
 
@@ -21,8 +21,8 @@ export async function GET(request: NextRequest) {
       message: 'Profile fetched successfully',
       data: { user },
     });
-  } catch {
-    return unauthorized();
+  } catch (error: unknown) {
+    return handleAuthError(error);
   }
 }
 
@@ -32,11 +32,20 @@ export async function PATCH(request: NextRequest) {
     const jwtPayload = await requireAuth(request);
     const body = await request.json();
 
+    const str = (v: unknown, max: number) => (typeof v === 'string' ? v.trim().slice(0, max) : undefined);
+    let dob: string | undefined;
+    if (typeof body.dob === 'string') {
+      if (Number.isNaN(new Date(body.dob).getTime())) {
+        return NextResponse.json({ success: false, message: 'Invalid date of birth' }, { status: 400 });
+      }
+      dob = body.dob;
+    }
+
     const updated = await updateProfile(jwtPayload.userId, {
-      name: body.name,
-      avatar: body.avatar,
-      phone: body.phone,
-      dob: body.dob,
+      name: str(body.name, 100),
+      avatar: str(body.avatar, 2048),
+      phone: str(body.phone, 32),
+      dob,
     });
 
     return NextResponse.json({
@@ -44,7 +53,7 @@ export async function PATCH(request: NextRequest) {
       message: 'Profile updated',
       data: { user: updated },
     });
-  } catch {
-    return unauthorized();
+  } catch (error: unknown) {
+    return handleAuthError(error);
   }
 }

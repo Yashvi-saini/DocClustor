@@ -281,7 +281,7 @@ export async function DELETE(
       data: {
         action: isLeavingVoluntarily ? 'MEMBER_LEFT' : 'MEMBER_REMOVED',
         targetId: targetUserId,
-        metadata: { email: targetMembership.userId },
+        metadata: { userId: targetMembership.userId },
         userId: callerUserId,
         orgId,
       }

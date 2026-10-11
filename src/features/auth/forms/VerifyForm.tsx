@@ -75,20 +75,18 @@ export default function VerifyForm() {
           otp: codeToVerify
         });
       } else {
-        const purpose = (mode === 'login' || mode === 'forgot') ? 'login' : 'register';
+        const purpose = mode === 'forgot' ? 'forgot' : mode === 'login' ? 'login' : 'register';
 
         response = await authService.verifyOtp({
           email: email,
           otp: codeToVerify,
-          purpose: purpose as 'register' | 'login'
+          purpose
         });
       }
 
       if (response && response.success) {
         toast.success("Verification successful!");
         if (mode === "forgot") {
-          await authService.setResetAuthorizedCookie();
-
           sessionStorage.setItem("reset_email", email);
           router.push("/reset-password");
         } else {
@@ -122,7 +120,7 @@ export default function VerifyForm() {
     }
     try {
 
-      const purpose = (mode === 'signup') ? 'register' : 'login';
+      const purpose = mode === 'signup' ? 'register' : mode === 'forgot' ? 'forgot' : 'login';
       await authService.sendOtp(purpose, email);
       toast.success("OTP Resent!");
       // Restart timer

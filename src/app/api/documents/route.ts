@@ -1,25 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireWorkspace, handleWorkspaceError } from '@backend/middleware/workspace';
 import { getDocuments, createDocument, deleteDocument } from '@backend/services/document.service';
+import { indexDocument } from '@backend/rag/indexer';
+import { isLockerUnlocked, workspaceIdOf } from '@backend/utils/session';
+import { rateLimit } from '@backend/utils/rate-limit';
 
-//GET /api/documents 
+export const maxDuration = 60;
+
 export async function GET(request: NextRequest) {
   try {
-   
     const workspaceContext = await requireWorkspace(request);
     const documents = await getDocuments(workspaceContext);
 
-    const workspaceId = workspaceContext.type === 'personal'
-      ? workspaceContext.userId
-      : workspaceContext.orgId;
-    const cookieName = `locker_session_${workspaceId}`;
-    const isSessionUnlocked = request.cookies.get(cookieName)?.value === 'unlocked';
+    const isSessionUnlocked = await isLockerUnlocked(
+      request,
+      workspaceContext.userId,
+      workspaceIdOf(workspaceContext)
+    );
 
     const securedDocuments = documents.map(doc => {
       if (doc.lockerId !== null && !isSessionUnlocked) {
         return {
           ...doc,
-          content: "[LOCKED]",
           fileUrl: null,
         };
       }
@@ -36,10 +38,18 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// ── POST /api/documents
 export async function POST(request: NextRequest) {
   try {
     const workspaceContext = await requireWorkspace(request);
+
+    const limited = rateLimit(`doc-upload:${workspaceContext.userId}`, 30, 10 * 60_000);
+    if (!limited.ok) {
+      return NextResponse.json(
+        { success: false, message: 'Too many uploads. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': String(limited.retryAfterSec) } }
+      );
+    }
+
     const body = await request.json();
 
     if (!body.title || !body.content) {
@@ -53,13 +63,22 @@ export async function POST(request: NextRequest) {
       title: body.title,
       content: body.content,
       type: body.type || 'TEXT',
-      visibility: body.visibility, // SHARED | PRIVATE | ADMIN_ONLY
-      fileSize: body.fileSize,
+      visibility: body.visibility,
       mimeType: body.mimeType,
     });
 
+    let indexed = false;
+    try {
+      indexed = await indexDocument(document.id);
+    } catch (err) {
+      console.error('[RAG] Indexing at upload failed:', err instanceof Error ? err.message : err);
+    }
+
+    const { content: _content, ...safeDocument } = document;
+    void _content;
+
     return NextResponse.json(
-      { success: true, message: 'Document created successfully', data: { document } },
+      { success: true, message: 'Document created successfully', data: { document: safeDocument, indexed } },
       { status: 201 }
     );
   } catch (error: unknown) {
@@ -67,7 +86,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// DELETE /api/documents
 export async function DELETE(request: NextRequest) {
   try {
     const workspaceContext = await requireWorkspace(request);

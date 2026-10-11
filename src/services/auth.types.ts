@@ -15,7 +15,7 @@ export interface LoginRequest {
 export interface VerifyOtpRequest {
     email: string;
     otp: string;
-    purpose: 'register' | 'login';
+    purpose: 'register' | 'login' | 'forgot';
 }
 
 export interface VerifyEmailRequest {

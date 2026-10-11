@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@backend/db/prisma';
 import { createToken } from '@backend/services/auth.service';
-import * as jose from 'jose';
-
-const JWT_SECRET = process.env.JWT_SECRET!;
+import { verifyOAuthTempToken } from '@backend/utils/session';
 
 export async function POST(request: NextRequest) {
   try {
     const { tempOAuthToken } = await request.json();
 
-    if (!tempOAuthToken) {
+    if (!tempOAuthToken || typeof tempOAuthToken !== 'string') {
       return NextResponse.json(
         { success: false, message: 'Temporary token is required' },
         { status: 400 }
@@ -17,19 +15,15 @@ export async function POST(request: NextRequest) {
     }
 
     // 1. Verify the short-lived temp token
-    const secret = new TextEncoder().encode(JWT_SECRET);
-    let payload: jose.JWTPayload;
-    try {
-      const result = await jose.jwtVerify(tempOAuthToken, secret);
-      payload = result.payload;
-    } catch {
+    const verified = await verifyOAuthTempToken(tempOAuthToken);
+    if (!verified) {
       return NextResponse.json(
         { success: false, message: 'Invalid or expired token' },
         { status: 401 }
       );
     }
 
-    const userId = payload.userId as string;
+    const userId = verified.userId;
 
     // 2. Fetch user (lean — only what's needed for session token)
     const user = await prisma.user.findUnique({
@@ -85,10 +79,9 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Token exchange failed';
-    console.error('[OAuth Token Exchange]', message);
+    console.error('[OAuth Token Exchange]', error instanceof Error ? error.message : error);
     return NextResponse.json(
-      { success: false, message },
+      { success: false, message: 'Token exchange failed' },
       { status: 500 }
     );
   }

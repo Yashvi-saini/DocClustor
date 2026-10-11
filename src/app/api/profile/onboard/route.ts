@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth, unauthorized } from '@backend/middleware/auth.middleware';
+import { requireAuth, handleAuthError } from '@backend/middleware/auth.middleware';
 import { completeOnboarding } from '@backend/services/profile.service';
 import { createToken } from '@backend/services/auth.service';
 import { prisma } from '@backend/db/prisma';
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     const { phone, dob, avatar, masterPin } = body;
 
     // Validate master PIN presence 
-    if (!masterPin || typeof masterPin !== 'string' || masterPin.length < 4 || masterPin.length > 6) {
+    if (!masterPin || typeof masterPin !== 'string' || !/^\d{4,6}$/.test(masterPin)) {
       return NextResponse.json(
         { success: false, message: 'Master PIN must be a numeric string between 4 and 6 digits' },
         { status: 400 }
@@ -70,13 +70,6 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Onboarding failed';
-    if (message === 'No authentication token found' || message === 'Invalid or expired token') {
-      return unauthorized();
-    }
-    return NextResponse.json(
-      { success: false, message },
-      { status: 500 }
-    );
+    return handleAuthError(error);
   }
 }

@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireWorkspace, handleWorkspaceError } from '@backend/middleware/workspace';
 import { verifyOtpInDb } from '@backend/services/otp.service';
-import { resetLockerPin } from '@backend/services/locker.service';
+import { resetLockerPin, assertCanManageLocker } from '@backend/services/locker.service';
+import { setLockerSession, workspaceIdOf } from '@backend/utils/session';
+import { rateLimit } from '@backend/utils/rate-limit';
 import { prisma } from '@backend/db/prisma';
 
 export async function POST(request: NextRequest) {
   try {
     const workspaceContext = await requireWorkspace(request);
+    assertCanManageLocker(workspaceContext);
+
     const body = await request.json();
     const { otp, pin } = body;
 
@@ -14,8 +18,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'OTP is required' }, { status: 400 });
     }
 
-    if (!pin || typeof pin !== 'string' || pin.length < 4 || pin.length > 6 || !/^\d+$/.test(pin)) {
+    if (!pin || typeof pin !== 'string' || !/^\d{4,6}$/.test(pin)) {
       return NextResponse.json({ success: false, message: 'PIN must be a numeric string between 4 and 6 digits' }, { status: 400 });
+    }
+
+    const limited = rateLimit(`locker-reset:${workspaceContext.userId}`, 10, 10 * 60_000);
+    if (!limited.ok) {
+      return NextResponse.json(
+        { success: false, message: 'Too many attempts. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': String(limited.retryAfterSec) } }
+      );
     }
 
     const user = await prisma.user.findUnique({
@@ -32,27 +44,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Invalid or expired OTP' }, { status: 400 });
     }
 
-    // Reset the locker PIN and clear lockout state
     await resetLockerPin(workspaceContext, pin);
 
-    // Set the transient session cookie to automatically unlock
-    const workspaceId = workspaceContext.type === 'personal'
-      ? workspaceContext.userId
-      : workspaceContext.orgId;
-
-    const cookieName = `locker_session_${workspaceId}`;
     const response = NextResponse.json({
       success: true,
       message: 'PIN reset successfully, locker unlocked',
     });
-
-    response.cookies.set(cookieName, 'unlocked', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-    });
-
+    await setLockerSession(response, workspaceContext.userId, workspaceIdOf(workspaceContext));
     return response;
   } catch (error: unknown) {
     return handleWorkspaceError(error);

@@ -43,7 +43,7 @@ export default function ForgotPasswordForm() {
     setLoading(true);
     setApiError(null);
     try {
-      const response = await authService.sendOtp('login', data.email);
+      const response = await authService.sendOtp('forgot', data.email);
 
       if (response && response.success) {
         toast.success("OTP sent to your email.");

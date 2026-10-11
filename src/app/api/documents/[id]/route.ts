@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireWorkspace, handleWorkspaceError } from '@backend/middleware/workspace';
 import { prisma } from '@backend/db/prisma';
+import { canAccessDocument } from '@backend/services/document.service';
+import { isLockerUnlocked, workspaceIdOf } from '@backend/utils/session';
 
 export async function GET(
   request: NextRequest,
@@ -12,41 +14,26 @@ export async function GET(
 
     const doc = await prisma.document.findUnique({
       where: { id: documentId },
-      select: { content: true, userId: true, orgId: true, lockerId: true },
+      select: {
+        content: true, userId: true, orgId: true, lockerId: true,
+        uploadedById: true, visibility: true,
+      },
     });
 
-    if (!doc) {
+    if (!doc || !canAccessDocument(workspaceContext, doc)) {
       return NextResponse.json(
         { success: false, message: 'Document not found' },
         { status: 404 }
       );
     }
 
-    // Access check
-    if (workspaceContext.type === 'personal') {
-      if (doc.userId !== workspaceContext.userId || doc.orgId !== null) {
-        return NextResponse.json(
-          { success: false, message: 'Unauthorized' },
-          { status: 403 }
-        );
-      }
-    } else {
-      if (doc.orgId !== workspaceContext.orgId) {
-        return NextResponse.json(
-          { success: false, message: 'Unauthorized' },
-          { status: 403 }
-        );
-      }
-    }
-
-    // Security check: if the document is locked, verify locker session is unlocked
     if (doc.lockerId !== null) {
-      const workspaceId = workspaceContext.type === 'personal'
-        ? workspaceContext.userId
-        : workspaceContext.orgId;
-      const cookieName = `locker_session_${workspaceId}`;
-      const isSessionUnlocked = request.cookies.get(cookieName)?.value === 'unlocked';
-      if (!isSessionUnlocked) {
+      const unlocked = await isLockerUnlocked(
+        request,
+        workspaceContext.userId,
+        workspaceIdOf(workspaceContext)
+      );
+      if (!unlocked) {
         return NextResponse.json(
           { success: false, message: 'Locker session is locked. Please unlock first.' },
           { status: 403 }

@@ -1,15 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@backend/db/prisma';
-import * as jose from 'jose';
+import { createOAuthTempToken } from '@backend/utils/session';
 import { sanitizeAuthError } from '@backend/utils/errorSanitizer';
-
-const JWT_SECRET = process.env.JWT_SECRET!;
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const code = searchParams.get('code');
   const error = searchParams.get('error');
   const BASE = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+
+  const state = searchParams.get('state');
+  const expectedState = request.cookies.get('oauth_state')?.value;
+  if (!error && (!state || !expectedState || state !== expectedState)) {
+    return NextResponse.redirect(`${BASE}/login?error=${encodeURIComponent('Invalid sign-in request. Please try again.')}`);
+  }
 
   if (error || !code) {
     const cleanErr = sanitizeAuthError(error || 'No authorization code provided');
@@ -55,6 +59,16 @@ export async function GET(request: NextRequest) {
     const avatar: string | null = profile.picture || null;
 
     if (!email) throw new Error('No email returned from Google');
+    if (profile.email_verified !== true) throw new Error('Your Google email address is not verified');
+
+
+    const existing = await prisma.user.findUnique({ where: { email }, select: { emailVerified: true } });
+    if (existing && !existing.emailVerified) {
+      await prisma.user.update({
+        where: { email },
+        data: { emailVerified: true, password: null, tokenVersion: { increment: 1 } },
+      });
+    }
 
     // 3. Find-or-create user (lean select projection — no heavy columns)
     let user = await prisma.user.findUnique({
@@ -76,14 +90,11 @@ export async function GET(request: NextRequest) {
     }
 
     // 4. Issue short-lived temp JWT (5 min) for client-side token exchange
-    const secret = new TextEncoder().encode(JWT_SECRET);
-    const tempToken = await new jose.SignJWT({ userId: user.id, email: user.email })
-      .setProtectedHeader({ alg: 'HS256' })
-      .setIssuedAt()
-      .setExpirationTime('5m')
-      .sign(secret);
+    const tempToken = await createOAuthTempToken(user.id, user.email);
 
-    return NextResponse.redirect(`${BASE}/oauth/callback?tempOAuthToken=${encodeURIComponent(tempToken)}`);
+    const done = NextResponse.redirect(`${BASE}/oauth/callback?tempOAuthToken=${encodeURIComponent(tempToken)}`);
+    done.cookies.set('oauth_state', '', { path: '/', maxAge: 0 });
+    return done;
   } catch (err) {
     const msg = sanitizeAuthError(err, 'Google authentication failed');
     console.error('[Google Callback Exception]', err);

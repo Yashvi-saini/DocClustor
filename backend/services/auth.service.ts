@@ -3,7 +3,6 @@ import { RegisterPayload, LoginPayload, UserProfile } from '../types/api.types';
 import bcrypt from 'bcryptjs';
 import * as jose from 'jose';
 
-const JWT_SECRET = process.env.JWT_SECRET!;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
 export async function createToken(payload: {
@@ -12,7 +11,8 @@ export async function createToken(payload: {
   profileComplete: boolean;
   tokenVersion: number;
 }) {
-  const secret = new TextEncoder().encode(JWT_SECRET);
+  if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET environment variable is not set');
+  const secret = new TextEncoder().encode(process.env.JWT_SECRET);
   return await new jose.SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
@@ -117,8 +117,14 @@ export async function loginUser(data: LoginPayload): Promise<{ user: UserProfile
 }
 
 export async function markEmailAsVerified(email: string): Promise<{ user: UserProfile; token: string }> {
+  const found = await prisma.user.findFirst({
+    where: { email: { equals: email.trim(), mode: 'insensitive' } },
+    select: { id: true },
+  });
+  if (!found) throw new Error('User not found');
+
   const user = await prisma.user.update({
-    where: { email },
+    where: { id: found.id },
     data: { emailVerified: true },
   });
 
@@ -133,7 +139,9 @@ export async function markEmailAsVerified(email: string): Promise<{ user: UserPr
 }
 
 export async function resetUserPassword(email: string, password: string): Promise<boolean> {
-  const user = await prisma.user.findUnique({ where: { email } });
+  const user = await prisma.user.findFirst({
+    where: { email: { equals: email.trim(), mode: 'insensitive' } },
+  });
   if (!user) {
     throw new Error('User not found');
   }
@@ -141,7 +149,7 @@ export async function resetUserPassword(email: string, password: string): Promis
   const hashedPassword = await bcrypt.hash(password, 12);
 
   await prisma.user.update({
-    where: { email },
+    where: { id: user.id },
     data: {
       password: hashedPassword,
       tokenVersion: { increment: 1 }, // Invalidates existing sessions

@@ -16,7 +16,7 @@ const publicRoutes = [
 // Routes related to the auth process itself
 const authRoutes = ['/login', '/signup', '/forgot-password', '/verify'];
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_for_dev_only_change_in_prod';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 interface DecodedToken {
   userId: string;
@@ -49,14 +49,14 @@ export async function middleware(request: NextRequest) {
 
   let decoded: DecodedToken | null = null;
 
-  if (token) {
+  if (token && JWT_SECRET) {
     try {
       const secretKey = new TextEncoder().encode(JWT_SECRET);
       const { payload } = await jose.jwtVerify(token, secretKey);
       decoded = payload as unknown as DecodedToken;
     } catch (err) {
       // Token is expired or invalid
-      console.error('[Middleware] JWT verification failed:', err);
+      console.error('[Middleware] JWT verification failed');
     }
   }
 
@@ -119,7 +119,7 @@ export async function middleware(request: NextRequest) {
 
   // Reset password flow gate
   if (pathname === '/reset-password') {
-    const hasResetCookie = request.cookies.has('reset_authorized');
+    const hasResetCookie = request.cookies.has('reset_session');
     if (!hasResetCookie) {
       return NextResponse.redirect(new URL('/forgot-password', request.url));
     }

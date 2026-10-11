@@ -93,12 +93,12 @@ export async function PATCH(
       if (typeof name !== 'string' || name.trim() === '') {
         return NextResponse.json({ success: false, message: 'Name cannot be empty' }, { status: 400 });
       }
-      updateData.name = name.trim();
+      updateData.name = name.trim().slice(0, 120);
     }
-    if (cin !== undefined) updateData.cin = cin.trim() || null;
-    if (gstin !== undefined) updateData.gstin = gstin.trim() || null;
-    if (industry !== undefined) updateData.industry = industry || null;
-    if (logo !== undefined) updateData.logo = logo || null;
+    if (cin !== undefined) updateData.cin = typeof cin === 'string' ? cin.trim().slice(0, 40) || null : null;
+    if (gstin !== undefined) updateData.gstin = typeof gstin === 'string' ? gstin.trim().slice(0, 40) || null : null;
+    if (industry !== undefined) updateData.industry = typeof industry === 'string' ? industry.slice(0, 80) || null : null;
+    if (logo !== undefined) updateData.logo = typeof logo === 'string' ? logo.slice(0, 2048) || null : null;
 
     const updatedOrg = await prisma.organisation.update({
       where: { id: orgId },
