@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (
-      typeof email !== 'string' || typeof password !== 'string' || typeof resolvedName !== 'string' ||
+      typeof email !== 'string' || !/^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{2,}$/.test(email.trim()) || typeof password !== 'string' || typeof resolvedName !== 'string' ||
       password.length < 8 || password.length > 128 || resolvedName.length > 100
     ) {
       return NextResponse.json(

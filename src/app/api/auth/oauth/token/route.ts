@@ -62,8 +62,9 @@ export async function POST(request: NextRequest) {
           name: user.name,
           profileComplete: user.profileComplete,
         },
+        // The session JWT lives only in the HttpOnly cookie below; never expose it to page JS.
         tokens: {
-          accessToken: token,
+          accessToken: 'cookie',
           refreshToken: '',
         },
       },

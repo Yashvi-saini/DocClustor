@@ -141,7 +141,8 @@ async function retrieve(
       lexicalDocs = docs.filter(d => unindexed.has(d.id));
 
       const queryVector = await embedQuery(question);
-      const hits = await searchChunks(queryVector, docs.filter(d => !unindexed.has(d.id)).map(d => d.id), DENSE_POOL);
+      const workspaceIds = Array.from(new Set(docs.map(d => d.orgId || d.userId || '').filter(Boolean)));
+      const hits = await searchChunks(queryVector, docs.filter(d => !unindexed.has(d.id)).map(d => d.id), DENSE_POOL, workspaceIds);
 
       hits.forEach((hit, rank) => {
         const doc = byId.get(hit.docId);
@@ -221,9 +222,20 @@ async function standaloneQuestion(question: string, history: ChatTurn[]): Promis
   return clean && clean.length > 0 && clean.length < 600 ? clean : question;
 }
 
+// Document text and titles are attacker-controlled (any uploader, any shared doc). Neutralise angle
+// brackets so a chunk can't close the <source>/<sources> wrapper and smuggle in instructions.
+function escapeBody(text: string): string {
+  return text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function escapeAttr(text: string): string {
+  // eslint-disable-next-line no-control-regex
+  return escapeBody(text).replace(/[\u0000-\u001f\u007f]+/g, ' ').replace(/"/g, "'").slice(0, 200);
+}
+
 function buildSystemPrompt(candidates: Candidate[]): string {
   const context = candidates
-    .map((c, i) => `<source id="${i + 1}" document="${c.docTitle.replace(/"/g, "'")}" workspace="${c.workspaceName.replace(/"/g, "'")}">\n${c.text}\n</source>`)
+    .map((c, i) => `<source id="${i + 1}" document="${escapeAttr(c.docTitle)}" workspace="${escapeAttr(c.workspaceName)}">\n${escapeBody(c.text)}\n</source>`)
     .join('\n');
 
   return `You are DocCluster Assistant, an enterprise document Q&A assistant.

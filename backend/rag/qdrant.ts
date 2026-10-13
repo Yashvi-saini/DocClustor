@@ -107,10 +107,15 @@ export async function deleteByDocId(docId: string): Promise<void> {
 export async function searchChunks(
   vector: number[],
   docIds: string[],
-  limit: number
+  limit: number,
+  workspaceIds: string[] = []
 ): Promise<ScoredChunk[]> {
   if (docIds.length === 0) return [];
   const { qdrantCollection } = ragConfig();
+
+  // Defence in depth: restrict by workspace as well as by the already-authorised document ids.
+  const must: Array<Record<string, unknown>> = [{ key: 'docId', match: { any: docIds } }];
+  if (workspaceIds.length > 0) must.push({ key: 'ws', match: { any: workspaceIds } });
 
   const json = await request<{
     result: { points: Array<{ score: number; payload: ChunkPayload }> };
@@ -118,7 +123,7 @@ export async function searchChunks(
     query: vector,
     limit,
     with_payload: true,
-    filter: { must: [{ key: 'docId', match: { any: docIds } }] },
+    filter: { must },
   });
 
   return (json.result?.points ?? []).map(p => ({ ...p.payload, score: p.score }));

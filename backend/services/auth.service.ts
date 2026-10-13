@@ -44,7 +44,9 @@ function toUserProfile(user: {
   };
 }
 
-export async function registerUser(data: RegisterPayload): Promise<{ user: UserProfile; token: string }> {
+export async function registerUser(input: RegisterPayload): Promise<{ user: UserProfile; token: string }> {
+  // Normalise so "Bob@x.com" and "bob@x.com" can never become two accounts
+  const data = { ...input, email: input.email.trim().toLowerCase() };
   const existing = await prisma.user.findUnique({ where: { email: data.email } });
   if (existing) {
     if (existing.emailVerified) {
@@ -92,7 +94,10 @@ export async function registerUser(data: RegisterPayload): Promise<{ user: UserP
 }
 
 export async function loginUser(data: LoginPayload): Promise<{ user: UserProfile; token: string }> {
-  const user = await prisma.user.findUnique({ where: { email: data.email } });
+  const user = await prisma.user.findFirst({
+    where: { email: { equals: data.email.trim(), mode: 'insensitive' } },
+    orderBy: { createdAt: 'asc' },
+  });
   if (!user || !user.password) {
     throw new Error('Invalid email or password');
   }

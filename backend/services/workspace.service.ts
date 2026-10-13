@@ -101,8 +101,18 @@ export async function inviteToOrganisation(
     },
   });
 
-  if (!inviterMembership || (inviterMembership.role !== OrgRole.OWNER && inviterMembership.role !== OrgRole.ADMIN)) {
+  // A PENDING (not yet accepted) membership must not carry any privileges.
+  if (
+    !inviterMembership ||
+    inviterMembership.status !== MembershipStatus.ACTIVE ||
+    (inviterMembership.role !== OrgRole.OWNER && inviterMembership.role !== OrgRole.ADMIN)
+  ) {
     throw new Error('Forbidden: Only organization owners and admins can invite members.');
+  }
+
+  // Mirrors the role-change rules: admins cannot create other admins.
+  if (role === OrgRole.ADMIN && inviterMembership.role !== OrgRole.OWNER) {
+    throw new Error('Forbidden: Only the organization owner can invite admins.');
   }
 
   let targetUser = await prisma.user.findUnique({

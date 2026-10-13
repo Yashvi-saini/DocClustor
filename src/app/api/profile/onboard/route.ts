@@ -24,6 +24,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Onboarding is one-time; otherwise a hijacked session could silently overwrite the master PIN
+    const current = await prisma.user.findUnique({ where: { id: userId }, select: { profileComplete: true } });
+    if (current?.profileComplete) {
+      return NextResponse.json(
+        { success: false, message: 'Onboarding has already been completed' },
+        { status: 409 }
+      );
+    }
+
     // 3. Complete onboarding
     const userProfile = await completeOnboarding(userId, {
       phone,

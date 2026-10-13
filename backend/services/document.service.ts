@@ -166,7 +166,11 @@ export async function createDocument(
   });
 }
 
-export async function deleteDocument(workspaceContext: WorkspaceContext, documentId: string) {
+export async function deleteDocument(
+  workspaceContext: WorkspaceContext,
+  documentId: string,
+  lockerUnlocked = false
+) {
   const doc = await prisma.document.findUnique({
     where: { id: documentId },
     select: { id: true, userId: true, orgId: true, uploadedById: true, visibility: true, lockerId: true },
@@ -193,6 +197,10 @@ export async function deleteDocument(workspaceContext: WorkspaceContext, documen
     if (!isUploader && !isDeletableByAdmin) {
       throw new HttpError('Unauthorized: You do not have permissions to delete this document', 403);
     }
+  }
+
+  if (doc.lockerId !== null && !lockerUnlocked) {
+    throw new HttpError('Locker session is locked. Please unlock first.', 403);
   }
 
   const deleted = await prisma.document.delete({

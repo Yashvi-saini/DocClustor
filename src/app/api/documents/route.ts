@@ -99,7 +99,13 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    await deleteDocument(workspaceContext, documentId);
+    const lockerUnlocked = await isLockerUnlocked(
+      request,
+      workspaceContext.userId,
+      workspaceIdOf(workspaceContext)
+    );
+
+    await deleteDocument(workspaceContext, documentId, lockerUnlocked);
 
     return NextResponse.json({
       success: true,
